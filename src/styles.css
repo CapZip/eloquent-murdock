@@ -314,6 +314,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 10px;
 }
 .footer-big-btn:hover {
   filter: brightness(1.1);
@@ -367,6 +368,7 @@ button:disabled {
     max-width: 220px;
     font-size: 20px;
     padding: 12px 0;
+    margin-bottom: 0px !important;
   }
   .footer-btn {
     font-size: 18px;
