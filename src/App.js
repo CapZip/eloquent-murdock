@@ -288,7 +288,7 @@ useEffect(() => {
         }
         return { ...eagle, x: newX };
       });
-      return newEagles.filter((eagle) => eagle.x < FINAL_COL + 3); // Fly past the end pavement
+      return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6); // Fly past the end pavement
     });
   }, 30);
   return () => clearInterval(interval);
@@ -639,7 +639,7 @@ useEffect(() => {
                         transform: "translate(-50%, -50%)",
                         width: 56,
                         height: 56,
-                        zIndex: 3,
+                        zIndex: 20,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center"
@@ -670,7 +670,7 @@ useEffect(() => {
                         transform: "translate(-50%, -50%)",
                         width: 75,
                         height: 75,
-                        zIndex: 3,
+                        zIndex: 20,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center"
