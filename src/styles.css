@@ -1,12 +1,12 @@
 @font-face {
-  font-family: 'Pixel Digivolve';
-  src: url('https://c4pt5c-3000.csb.app/game/PixelDigivolve.otf') format('opentype');
+  font-family: 'Minecraft';
+  src: url('https://c4pt5c-3000.csb.app/game/Minecraft.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 
-body, .pixel-font {
-  font-family: 'Pixel Digivolve', monospace, sans-serif;
+body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span {
+  font-family: 'Minecraft', sans-serif !important;
 }
 
 .App {
