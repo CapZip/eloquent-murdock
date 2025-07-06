@@ -65,11 +65,14 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
   
   .game-board {
     width: 95vw !important;
-    height: 80vh !important;
+    height: 750px !important;
     max-width: 1260px !important; /* VISIBLE_COLS * COL_WIDTH */
     margin: 12px auto !important;
     padding-top: 80px;
     box-sizing: border-box;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 
