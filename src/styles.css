@@ -1,4 +1,79 @@
 .App {
   font-family: sans-serif;
   text-align: center;
+  min-height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Game board responsive styles */
+.game-board {
+  /* Desktop: full size */
+}
+
+/* Chicken sprite responsive positioning */
+.chicken-sprite {
+  /* Desktop positioning handled by inline styles */
+}
+
+/* Make dying chicken slightly bigger to match alive chicken */
+.chicken-sprite[src*="Chicken Dead V2"] {
+  width: 110px !important;
+  height: 110px !important;
+}
+
+@media (max-width: 768px) {
+  .chicken-sprite {
+    /* Scale chicken down slightly on mobile */
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  .chicken-sprite[src*="Chicken Dead V2"] {
+    width: 90px !important;
+    height: 90px !important;
+  }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .App h1 {
+    font-size: 24px;
+    margin: 10px 0;
+  }
+  
+  .App > div:first-of-type {
+    font-size: 18px !important;
+    margin: 4px !important;
+  }
+  
+  .App > div:nth-of-type(2) {
+    font-size: 14px !important;
+    margin: 2px !important;
+  }
+  
+  .game-board {
+    width: 95vw !important;
+    height: 60vh !important;
+    max-width: 1260px !important; /* VISIBLE_COLS * COL_WIDTH */
+    margin: 12px auto !important;
+  }
+}
+
+/* Prevent text selection on mobile */
+.App {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Touch-friendly button styles */
+button:active {
+  transform: scale(0.95);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
