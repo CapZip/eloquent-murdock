@@ -168,6 +168,7 @@ export default function App() {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [roadBlocks, setRoadBlocks] = useState([]); // Array of {col, lane} positions
   const [claimedCoins, setClaimedCoins] = useState([]); // Array of claimed coin columns
+  const [backgroundCars, setBackgroundCars] = useState([]); // Array of { lane, col, y } for background traffic
   // Prevent holding spacebar
   const spaceHeld = useRef(false);
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
@@ -292,7 +293,53 @@ useEffect(() => {
     });
   }, 30);
   return () => clearInterval(interval);
-}, [gameOver, win, isDying, player.col]);
+  }, [gameOver, win, isDying, player.col]);
+
+  // Background car spawning and animation system
+  useEffect(() => {
+    if (gameOver || win) return;
+    
+    // Spawn new background cars randomly
+    const spawnInterval = setInterval(() => {
+      // Only spawn cars on road lanes ahead of the player (excluding center lane)
+      const roadLanes = [0, 1, 2, 4, 5, 6]; // All lanes except center (3)
+      const randomLane = roadLanes[Math.floor(Math.random() * roadLanes.length)];
+      
+      // Find a random road column ahead of the player's current position (but not the next column)
+      const roadColumns = [];
+      for (let col = player.col + 2; col < FINAL_COL; col++) { // Skip the next column the player will jump to
+        if (board[randomLane][col].type === "road") {
+          roadColumns.push(col);
+        }
+      }
+      
+      if (roadColumns.length > 0 && Math.random() < 0.7) { // 70% chance to spawn
+        const randomCol = roadColumns[Math.floor(Math.random() * roadColumns.length)];
+        setBackgroundCars(prev => [...prev, {
+          lane: randomLane,
+          col: randomCol,
+          y: -1.1, // Start above the board
+          speed: 0.35 // Same speed as death cars
+        }]);
+      }
+    }, 1000); // Check for spawning every 1 second
+    
+    // Animate background cars moving down
+    const animateInterval = setInterval(() => {
+      setBackgroundCars((oldCars) => {
+        const newCars = oldCars.map((car) => ({
+          ...car,
+          y: car.y + 0.35 // Same speed as death cars
+        }));
+        return newCars.filter((car) => car.y < LANES + 1); // Remove cars that go off screen
+      });
+    }, 30); // Same interval as death cars
+    
+    return () => {
+      clearInterval(spawnInterval);
+      clearInterval(animateInterval);
+    };
+  }, [gameOver, win, player.col, board]);
 
   // Handle keyboard and touch controls
   useEffect(() => {
@@ -710,8 +757,8 @@ useEffect(() => {
                     left: c * COL_WIDTH + COL_WIDTH * 0.5,
                     top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
                     transform: "translate(-50%, -50%)",
-                    width: 56,
-                    height: 56,
+                    width: 85,
+                    height: 85,
                     zIndex: 50,
                     display: "flex",
                     alignItems: "center",
@@ -721,14 +768,14 @@ useEffect(() => {
                   <img
                     src={COIN}
                     alt="coin"
-                    style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                    style={{ width: 85, height: 85, imageRendering: "pixelated", position: "absolute", inset: 0 }}
                   />
                   <span className="pixel-font" style={{
                     position: "relative",
                     zIndex: 10,
                     color: "#fff",
                     fontWeight: "bold",
-                    fontSize: 20,
+                    fontSize: 16,
                     textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
                   }}>+{(0.33 * c).toFixed(2)}x</span>
                 </div>
@@ -741,8 +788,8 @@ useEffect(() => {
                     left: c * COL_WIDTH + COL_WIDTH * 0.5,
                     top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
                     transform: "translate(-50%, -50%)",
-                    width: 75,
-                    height: 75,
+                    width: 95,
+                    height: 95,
                     zIndex: 50,
                     display: "flex",
                     alignItems: "center",
@@ -752,11 +799,30 @@ useEffect(() => {
                   <img
                     src={COIN_FRAME}
                     alt="claimed coin"
-                    style={{ width: 75, height: 75, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                    style={{ width: 95, height: 95, imageRendering: "pixelated", position: "absolute", inset: 0 }}
                   />
                 </div>
               )}
             </React.Fragment>
+          ))}
+          {/* Render background cars globally for correct camera movement */}
+          {backgroundCars.map((car, i) => (
+            <img
+              key={`bg-car-${i}`}
+              src={CAR}
+              alt="background car"
+              style={{
+                position: "absolute",
+                left: car.col * COL_WIDTH,
+                top: car.y * (800 / LANES),
+                width: COL_WIDTH,
+                height: (800 / LANES),
+                zIndex: 15, // Above trees but below coins and chicken
+                imageRendering: "pixelated",
+                pointerEvents: "none",
+                opacity: 1 // Normal opacity
+              }}
+            />
           ))}
         </motion.div>
         {/* Chicken absolutely positioned inside board container */}
@@ -779,22 +845,14 @@ useEffect(() => {
         />
         {/* Cars absolutely positioned inside board container */}
         {carPositions.map((car, i) => (
-          <motion.img
+          <img
             key={`car-${i}`}
             src={CAR}
             alt="car"
-            initial={{ scale: 1, opacity: 0, y: 0 }}
-            animate={{
-              y: car.y * (800 / LANES),
-              scale: 1,
-              opacity: 1,
-              transition: { duration: 0.3, ease: "easeOut" }
-            }}
-            exit={{ scale: 1, opacity: 0 }}
             style={{
               position: "absolute",
               left: (car.col - firstVisibleCol) * COL_WIDTH,
-              top: car.lane * (800 / LANES),
+              top: car.y * (800 / LANES),
               width: COL_WIDTH,
               height: (800 / LANES),
               zIndex: isDying ? 200 : 50, // above chicken when dying
@@ -803,6 +861,8 @@ useEffect(() => {
             }}
           />
         ))}
+
+
         {/* Eagles absolutely positioned inside board container */}
         {eaglePositions.map((eagle, i) => (
           <motion.img
