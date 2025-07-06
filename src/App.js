@@ -28,7 +28,7 @@ const COIN_FRAME = process.env.PUBLIC_URL + "/game/Coin Frame.png";
 
 const COLORS = {
   grass: "#429d4b",
-  road: "rgb(26,26,26)",
+  road: "#17171d",
   pavement: "rgb(56,56,75)"
 };
 
@@ -107,15 +107,15 @@ function makeBoard() {
   const board = [];
   for (let l = 0; l < LANES; l++) {
     const row = [];
-    for (let c = 0; c < COLUMN_TYPES.length; c++) { // Generate all columns for visuals
+    for (let c = 0; c < COLUMN_TYPES.length; c++) {
       const type = COLUMN_TYPES[c];
       let deco = null;
       let grassDecal = null;
       let grassDecalStyle = null;
       if (type === "grass") {
         if (l !== CENTER_LANE) {
-          if (Math.random() < 0.7) deco = { type: "bush", img: BUSH, top: Math.random() * 40 + 30, left: Math.random() * 30 + 10 };
-          else if (Math.random() < 1.0) deco = { type: "tree", img: Math.random() < 0.5 ? TREE : TREE2, top: Math.random() * 40 + 10, left: Math.random() * 30 + 5 };
+          if (Math.random() < 0.3) deco = { type: "bush", img: BUSH, top: Math.random() * 40 + 30, left: Math.random() * 30 + 10 };
+          else if (Math.random() < 0.15) deco = { type: "tree", img: Math.random() < 0.5 ? TREE : TREE2, top: Math.random() * 40 + 10, left: Math.random() * 30 + 5 };
         }
         grassDecal = GRASS_VARIANTS[Math.floor(Math.random() * GRASS_VARIANTS.length)];
         const size = 24 + Math.floor(Math.random() * 8); // 24-32px
@@ -569,52 +569,6 @@ useEffect(() => {
                       }}
                     />
                   )}
-                  {/* Road lines */}
-                  {row[c]?.type === "road" && (
-                    <>
-                      {/* Side white dashed lines */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          top: 0,
-                          width: 6,
-                          height: "100%",
-                          background:
-                            "repeating-linear-gradient(0deg, white 0px, white 20px, transparent 20px, transparent 40px)",
-                          zIndex: 1
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          right: 0,
-                          top: 0,
-                          width: 6,
-                          height: "100%",
-                          background:
-                            "repeating-linear-gradient(0deg, white 0px, white 20px, transparent 20px, transparent 40px)",
-                          zIndex: 1
-                        }}
-                      />
-                      {/* Center yellow dashed line */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: "50%",
-                          top: 0,
-                          width: 3,
-                          height: "100%",
-                          opacity: 0.3,
-                          background:
-                            "repeating-linear-gradient(0deg, yellow 0px, yellow 30px, transparent 30px, transparent 60px)",
-                          transform: "translateX(-50%)",
-                          zIndex: 1
-                        }}
-                      />
-                    </>
-                  )}
-
                   {/* Decorations */}
                   {row[c]?.deco && (
                     <img
@@ -626,8 +580,38 @@ useEffect(() => {
                         top: row[c].deco.top,
                         width: row[c].deco.type === "tree" ? 120 : 95,
                         height: row[c].deco.type === "tree" ? 150 : 84,
+                        zIndex: 10 + l, // higher for lower lanes
+                        imageRendering: "pixelated",
+                        pointerEvents: "none"
+                      }}
+                    />
+                  )}
+                  {/* Road half-dash lines between adjacent road columns */}
+                  {row[c]?.type === "road" && row[c + 1]?.type === "road" && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 0,
+                        width: "4px",
+                        height: "100%",
+                        background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
                         zIndex: 2,
-                        imageRendering: "pixelated"
+                        pointerEvents: "none"
+                      }}
+                    />
+                  )}
+                  {row[c]?.type === "road" && row[c - 1]?.type === "road" && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        width: "4px",
+                        height: "100%",
+                        background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
+                        zIndex: 2,
+                        pointerEvents: "none"
                       }}
                     />
                   )}
@@ -756,7 +740,7 @@ useEffect(() => {
             transform: "translate(-50%, -50%)",
             width: 100,
             height: 100,
-            zIndex: 10,
+            zIndex: 100, // always above trees above him
             imageRendering: "pixelated",
             pointerEvents: "none",
             filter: (isDying || gameOver) ? "grayscale(1)" : "none",

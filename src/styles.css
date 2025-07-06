@@ -17,6 +17,16 @@ body, .pixel-font {
   box-sizing: border-box;
 }
 
+/* Game board responsive styles */
+.game-board {
+  /* Desktop: full size */
+}
+
+/* Chicken sprite responsive positioning */
+.chicken-sprite {
+  /* Desktop positioning handled by inline styles */
+}
+
 /* Make dying chicken slightly bigger to match alive chicken */
 .chicken-sprite[src*="Chicken Dead V2"] {
   width: 110px !important;
@@ -58,6 +68,8 @@ body, .pixel-font {
     height: 60vh !important;
     max-width: 1260px !important; /* VISIBLE_COLS * COL_WIDTH */
     margin: 12px auto !important;
+    padding-top: 80px;
+    box-sizing: border-box;
   }
 }
 
