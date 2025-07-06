@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import "./styles.css";
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import '@solana/wallet-adapter-react-ui/styles.css';
+import { clusterApiUrl } from '@solana/web3.js';
 
 const LANES = 7;
 const COL_WIDTH = 140;
@@ -200,8 +205,11 @@ export default function App() {
     { label: "BONK", value: "BONK", icon: "🐕" },
     { label: "WIF", value: "WIF", icon: "🧢" },
     { label: "POPCAT", value: "POPCAT", icon: "🐱" },
-    { label: "SOLANA", value: "SOLANA", icon: <img src="/solana-logo.png" alt="Solana" style={{ width: 18, height: 18, verticalAlign: 'middle' }} /> }
+    { label: "SOLANA", value: "SOLANA", icon: <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 18, height: 18, verticalAlign: 'middle' }} /> }
   ];
+  
+  const endpoint = clusterApiUrl('mainnet-beta');
+  const wallets = [new PhantomWalletAdapter()];
   
   // Preload all images on mount
   useEffect(() => {
@@ -609,463 +617,468 @@ export default function App() {
   }
 
   return (
-    <div className="App">
-      {/* Game Header */}
-      <div className="game-header">
-        <div className="game-header-title">UNCROSSABLE</div>
-        <div className="game-header-right">
-          {/* Options Selector */}
-          <select
-            className="game-header-selector"
-            value={selectedToken}
-            onChange={e => setSelectedToken(e.target.value)}
-          >
-            {tokenOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
-            ))}
-          </select>
-          {/* Coin Display */}
-          <div className="game-header-coins">
-            <span>100</span>
-            {selectedToken === "SOLANA"
-              ? <img src="/solana-logo.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
-              : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
-            }
-          </div>
-          {/* Wallet Button */}
-          <button className="game-header-wallet">
-            <img src="/game/UI/charticon.svg" alt="Phantom" style={{ width: 16, height: 16, marginRight: 4 }} />
-            Hpem...yTmE
-          </button>
-          {/* Leaderboard Icon */}
-          <button className="game-header-leaderboard">
-            <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
-          </button>
-        </div>
-      </div>
-      <div
-        className="game-board"
-        style={{
-          position: "relative",
-          width: visibleCols * COL_WIDTH,
-          height: 800,
-          margin: "24px auto",
-          marginBottom: "0",
-          marginTop: cameraYOffset,
-          background: COLORS.grass,
-          overflow: "hidden",
-          boxShadow: "0 8px 32px #000a",
-          boxSizing: "border-box"
-        }}
-        onClick={() => {
-          if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
-            moveChicken();
-          }
-        }}
-      >
-        {/* Board grid */}
-        <motion.div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: scrollOffset,
-            height: "100%",
-            width: board[0].length * COL_WIDTH,
-            display: "flex",
-            transform: `translateY(${cameraYOffset}px)`
-          }}
-          animate={{ left: scrollOffset }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        >
-          {/* Board grid columns/tiles */}
-          {Array.from({ length: board[0].length }).map((_, c) => (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <div className="App">
+            {/* Game Header */}
+            <div className="game-header">
+              <div className="game-header-title">UNCROSSABLE</div>
+              <div className="game-header-right">
+                {/* Options Selector */}
+                <select
+                  className="game-header-selector"
+                  value={selectedToken}
+                  onChange={e => setSelectedToken(e.target.value)}
+                >
+                  {tokenOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
+                  ))}
+                </select>
+                {/* Coin Display */}
+                <div className="game-header-coins">
+                  <span>100</span>
+                  {selectedToken === "SOLANA"
+                    ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+                    : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
+                  }
+                </div>
+                {/* Wallet Button */}
+                <div style={{ minWidth: 120 }}>
+                  <WalletMultiButton />
+                </div>
+                {/* Leaderboard Icon */}
+                <button className="game-header-leaderboard">
+                  <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
+                </button>
+              </div>
+            </div>
             <div
-              key={`col-${c}`}
+              className="game-board"
               style={{
-                position: "absolute",
-                left: c * COL_WIDTH,
-                top: 0,
-                width: COL_WIDTH,
-                height: "100%",
-                background: undefined,
-                zIndex: 0
+                position: "relative",
+                width: visibleCols * COL_WIDTH,
+                height: 800,
+                margin: "24px auto",
+                marginBottom: "0",
+                marginTop: cameraYOffset,
+                background: COLORS.grass,
+                overflow: "hidden",
+                boxShadow: "0 8px 32px #000a",
+                boxSizing: "border-box"
+              }}
+              onClick={() => {
+                if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
+                  moveChicken();
+                }
               }}
             >
-              {/* Stack lane backgrounds vertically in this column */}
-              {board.map((row, l) => (
-                <div
-                  key={`lane-${l}-${c}`}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: Math.floor(l * (800 / LANES)),
-                    width: COL_WIDTH,
-                    height: Math.ceil(800 / LANES),
-                    background: row[c]?.type === "grass" ? COLORS.grass : (row[c]?.type === "pavement" ? COLORS.pavement : (row[c]?.type ? COLORS[row[c].type] : COLORS.grass)),
-                    overflow: "visible",
-                    borderBottom: l < LANES - 1 ? "1px solid rgba(0,0,0,0.1)" : "none" // Subtle border to prevent gaps
-                  }}
-                >
-                  {/* Grass decal (small, random) */}
-                  {row[c]?.type === "grass" && row[c]?.grassDecal && (
-                    <img
-                      src={row[c].grassDecal}
-                      alt="grass"
-                      style={row[c].grassDecalStyle}
-                    />
-                  )}
-                  {/* Sidewalk pattern */}
-                  {row[c]?.type === "pavement" && (
-                    <img
-                      src={SIDEWALK}
-                      alt="sidewalk"
-                      style={{
-                        position: "absolute",
-                        left: "50%",
-                        top: "50%",
-                        width: "99%",
-                        height: "99%",
-                        transform: "translate(-50%, -50%)",
-                        objectFit: "contain",
-                        zIndex: 1
-                      }}
-                    />
-                  )}
-                  {/* Decorations */}
-                  {row[c]?.deco && (
-                    <img
-                      src={row[c].deco.img}
-                      alt={row[c].deco.type}
-                      style={{
-                        position: "absolute",
-                        left: row[c].deco.left,
-                        top: row[c].deco.top,
-                        width: row[c].deco.type === "tree" ? 120 : 95,
-                        height: row[c].deco.type === "tree" ? 150 : 84,
-                        zIndex: 10 + l, // higher for lower lanes
-                        imageRendering: "pixelated",
-                        pointerEvents: "none"
-                      }}
-                    />
-                  )}
-                  {/* Road half-dash lines between adjacent road columns */}
-                  {row[c]?.type === "road" && row[c + 1]?.type === "road" && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        right: 0,
-                        top: 0,
-                        width: "4px",
-                        height: "100%",
-                        background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
-                        zIndex: 2,
-                        pointerEvents: "none"
-                      }}
-                    />
-                  )}
-                  {row[c]?.type === "road" && row[c - 1]?.type === "road" && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        top: 0,
-                        width: "4px",
-                        height: "100%",
-                        background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
-                        zIndex: 2,
-                        pointerEvents: "none"
-                      }}
-                    />
-                  )}
-                  {/* Car in this lane/column (top to bottom) */}
-                  {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
-                    <motion.img
-                      key={`car-${l}-${c}-${i}`}
-                      src={CARS[car.carType || 0]}
-                      alt="car"
-                      initial={{ scale: 1, opacity: 0, y: 0 }}
-                      animate={{
-                        y: car.y * (800 / LANES),
-                        scale: 1,
-                        opacity: 1,
-                        transition: { duration: 0.3, ease: "easeOut" }
-                      }}
-                      exit={{ scale: 1, opacity: 0 }}
-                      style={{
-                        position: "absolute",
-                        left: (car.col - firstVisibleCol) * COL_WIDTH,
-                        top: car.lane * (800 / LANES),
-                        width: COL_WIDTH,
-                        height: (800 / LANES),
-                        zIndex: isDying ? 200 : 50, // above chicken when dying
-                        imageRendering: "pixelated",
-                        pointerEvents: "none"
-                      }}
-                    />
-                  ))}
-                  
+              {/* Board grid */}
+              <motion.div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: scrollOffset,
+                  height: "100%",
+                  width: board[0].length * COL_WIDTH,
+                  display: "flex",
+                  transform: `translateY(${cameraYOffset}px)`
+                }}
+                animate={{ left: scrollOffset }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              >
+                {/* Board grid columns/tiles */}
+                {Array.from({ length: board[0].length }).map((_, c) => (
+                  <div
+                    key={`col-${c}`}
+                    style={{
+                      position: "absolute",
+                      left: c * COL_WIDTH,
+                      top: 0,
+                      width: COL_WIDTH,
+                      height: "100%",
+                      background: undefined,
+                      zIndex: 0
+                    }}
+                  >
+                    {/* Stack lane backgrounds vertically in this column */}
+                    {board.map((row, l) => (
+                      <div
+                        key={`lane-${l}-${c}`}
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: Math.floor(l * (800 / LANES)),
+                          width: COL_WIDTH,
+                          height: Math.ceil(800 / LANES),
+                          background: row[c]?.type === "grass" ? COLORS.grass : (row[c]?.type === "pavement" ? COLORS.pavement : (row[c]?.type ? COLORS[row[c].type] : COLORS.grass)),
+                          overflow: "visible",
+                          borderBottom: l < LANES - 1 ? "1px solid rgba(0,0,0,0.1)" : "none" // Subtle border to prevent gaps
+                        }}
+                      >
+                        {/* Grass decal (small, random) */}
+                        {row[c]?.type === "grass" && row[c]?.grassDecal && (
+                          <img
+                            src={row[c].grassDecal}
+                            alt="grass"
+                            style={row[c].grassDecalStyle}
+                          />
+                        )}
+                        {/* Sidewalk pattern */}
+                        {row[c]?.type === "pavement" && (
+                          <img
+                            src={SIDEWALK}
+                            alt="sidewalk"
+                            style={{
+                              position: "absolute",
+                              left: "50%",
+                              top: "50%",
+                              width: "99%",
+                              height: "99%",
+                              transform: "translate(-50%, -50%)",
+                              objectFit: "contain",
+                              zIndex: 1
+                            }}
+                          />
+                        )}
+                        {/* Decorations */}
+                        {row[c]?.deco && (
+                          <img
+                            src={row[c].deco.img}
+                            alt={row[c].deco.type}
+                            style={{
+                              position: "absolute",
+                              left: row[c].deco.left,
+                              top: row[c].deco.top,
+                              width: row[c].deco.type === "tree" ? 120 : 95,
+                              height: row[c].deco.type === "tree" ? 150 : 84,
+                              zIndex: 10 + l, // higher for lower lanes
+                              imageRendering: "pixelated",
+                              pointerEvents: "none"
+                            }}
+                          />
+                        )}
+                        {/* Road half-dash lines between adjacent road columns */}
+                        {row[c]?.type === "road" && row[c + 1]?.type === "road" && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              right: 0,
+                              top: 0,
+                              width: "4px",
+                              height: "100%",
+                              background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
+                              zIndex: 2,
+                              pointerEvents: "none"
+                            }}
+                          />
+                        )}
+                        {row[c]?.type === "road" && row[c - 1]?.type === "road" && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: 0,
+                              top: 0,
+                              width: "4px",
+                              height: "100%",
+                              background: "repeating-linear-gradient(to bottom, #D9D9D9 0 32px, transparent 32px 64px)",
+                              zIndex: 2,
+                              pointerEvents: "none"
+                            }}
+                          />
+                        )}
+                        {/* Car in this lane/column (top to bottom) */}
+                        {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
+                          <motion.img
+                            key={`car-${l}-${c}-${i}`}
+                            src={CARS[car.carType || 0]}
+                            alt="car"
+                            initial={{ scale: 1, opacity: 0, y: 0 }}
+                            animate={{
+                              y: car.y * (800 / LANES),
+                              scale: 1,
+                              opacity: 1,
+                              transition: { duration: 0.3, ease: "easeOut" }
+                            }}
+                            exit={{ scale: 1, opacity: 0 }}
+                            style={{
+                              position: "absolute",
+                              left: (car.col - firstVisibleCol) * COL_WIDTH,
+                              top: car.lane * (800 / LANES),
+                              width: COL_WIDTH,
+                              height: (800 / LANES),
+                              zIndex: isDying ? 200 : 50, // above chicken when dying
+                              imageRendering: "pixelated",
+                              pointerEvents: "none"
+                            }}
+                          />
+                        ))}
+                        
 
-                  
-                  {/* Road block */}
-                  {roadBlocks.some(block => block.col === c && block.lane === l) && (
-                    <motion.img
-                      src={BRICK}
-                      alt="road block"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      style={{
-                        position: "absolute",
-                        left: "7%",
-                        bottom: "90%",
-                        width: 120,
-                        height: 60,
-                        zIndex: 5,
-                        imageRendering: "pixelated"
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-          {/* Render all trees and bushes globally for correct z-index and overflow, INSIDE the board container */}
-          {allDecos.map((deco, i) => (
-            <img
-              key={`deco-${i}`}
-              src={deco.img}
-              alt={deco.type}
-              style={{
-                position: "absolute",
-                left: deco.col * COL_WIDTH + deco.left,
-                top: deco.lane * (800 / LANES) + deco.top,
-                width: deco.type === "tree" ? 120 : 95,
-                height: deco.type === "tree" ? 150 : 84,
-                zIndex: 10 + deco.lane,
-                imageRendering: "pixelated",
-                pointerEvents: "none"
-              }}
-            />
-          ))}
-          {/* Render all coins globally for correct z-index */}
-          {board[CENTER_LANE].map((tile, c) => (
-            <React.Fragment key={`coin-${c}`}>
-              {/* Coin only in chicken's lane, on roads, between crosswalks */}
-              {tile.hasCoin && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
-                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
-                    transform: "translate(-50%, -50%)",
-                    width: 85,
-                    height: 85,
-                    zIndex: 50,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
+                        
+                        {/* Road block */}
+                        {roadBlocks.some(block => block.col === c && block.lane === l) && (
+                          <motion.img
+                            src={BRICK}
+                            alt="road block"
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            style={{
+                              position: "absolute",
+                              left: "7%",
+                              bottom: "90%",
+                              width: 120,
+                              height: 60,
+                              zIndex: 5,
+                              imageRendering: "pixelated"
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {/* Render all trees and bushes globally for correct z-index and overflow, INSIDE the board container */}
+                {allDecos.map((deco, i) => (
                   <img
-                    src={COIN}
-                    alt="coin"
-                    style={{ width: 85, height: 85, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                    key={`deco-${i}`}
+                    src={deco.img}
+                    alt={deco.type}
+                    style={{
+                      position: "absolute",
+                      left: deco.col * COL_WIDTH + deco.left,
+                      top: deco.lane * (800 / LANES) + deco.top,
+                      width: deco.type === "tree" ? 120 : 95,
+                      height: deco.type === "tree" ? 150 : 84,
+                      zIndex: 10 + deco.lane,
+                      imageRendering: "pixelated",
+                      pointerEvents: "none"
+                    }}
                   />
-                  <span className="pixel-font" style={{
-                    position: "relative",
-                    zIndex: 10,
-                    color: "#fff",
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
-                  }}>+{(0.33 * c).toFixed(2)}x</span>
-                </div>
-              )}
-              {/* Claimed coin marker (gold coin) for previously claimed coins */}
-              {claimedCoins.includes(c) && c < player.col && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
-                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
-                    transform: "translate(-50%, -50%)",
-                    width: 95,
-                    height: 95,
-                    zIndex: 50,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
+                ))}
+                {/* Render all coins globally for correct z-index */}
+                {board[CENTER_LANE].map((tile, c) => (
+                  <React.Fragment key={`coin-${c}`}>
+                    {/* Coin only in chicken's lane, on roads, between crosswalks */}
+                    {tile.hasCoin && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                          top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                          transform: "translate(-50%, -50%)",
+                          width: 85,
+                          height: 85,
+                          zIndex: 50,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                      >
+                        <img
+                          src={COIN}
+                          alt="coin"
+                          style={{ width: 85, height: 85, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                        />
+                        <span className="pixel-font" style={{
+                          position: "relative",
+                          zIndex: 10,
+                          color: "#fff",
+                          fontWeight: "bold",
+                          fontSize: 16,
+                          textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
+                        }}>+{(0.33 * c).toFixed(2)}x</span>
+                      </div>
+                    )}
+                    {/* Claimed coin marker (gold coin) for previously claimed coins */}
+                    {claimedCoins.includes(c) && c < player.col && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                          top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                          transform: "translate(-50%, -50%)",
+                          width: 95,
+                          height: 95,
+                          zIndex: 50,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                      >
+                        <img
+                          src={COIN_FRAME}
+                          alt="claimed coin"
+                          style={{ width: 95, height: 95, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                        />
+                      </div>
+                    )}
+                    {/* Selector frame around the next claimable coin */}
+                    {tile.hasCoin && c === player.col + 1 && (
+                      <img
+                        src={SELECTOR_FRAMES[selectorFrame]}
+                        alt="selector"
+                        style={{
+                          position: "absolute",
+                          left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                          top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                          transform: "translate(-50%, -50%)",
+                          width: selectorFrame === 1 ? 125 : 105,
+                          height: selectorFrame === 1 ? 125 : 105,
+                          zIndex: 51, // Above coin
+                          pointerEvents: "none"
+                        }}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+                {/* Render background cars globally for correct camera movement */}
+                {backgroundCars.map((car, i) => (
                   <img
-                    src={COIN_FRAME}
-                    alt="claimed coin"
-                    style={{ width: 95, height: 95, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                    key={`bg-car-${i}`}
+                    src={CARS[car.carType]}
+                    alt="background car"
+                    style={{
+                      position: "absolute",
+                      left: car.col * COL_WIDTH,
+                      top: car.y * (800 / LANES),
+                      width: COL_WIDTH,
+                      height: (800 / LANES),
+                      zIndex: 15, // Above trees but below coins and chicken
+                      imageRendering: "pixelated",
+                      pointerEvents: "none",
+                      opacity: 1 // Normal opacity
+                    }}
                   />
-                </div>
-              )}
-              {/* Selector frame around the next claimable coin */}
-              {tile.hasCoin && c === player.col + 1 && (
+                ))}
+              </motion.div>
+              {/* Chicken absolutely positioned inside board container */}
+              <img
+                src={isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]}
+                alt="chicken"
+                style={{
+                  position: "absolute",
+                  left: (chickenAnimRef.current.col - firstVisibleCol) * COL_WIDTH + COL_WIDTH * 0.5,
+                  top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                  transform: "translate(-50%, -50%)",
+                  width: 100,
+                  height: 100,
+                  zIndex: 100, // always above trees above him
+                  imageRendering: "pixelated",
+                  pointerEvents: "none",
+                  transition: "left 0.3s ease-out"
+                }}
+                className="chicken-sprite"
+              />
+              {/* Cars absolutely positioned inside board container */}
+              {carPositions.map((car, i) => (
                 <img
-                  src={SELECTOR_FRAMES[selectorFrame]}
-                  alt="selector"
+                  key={`car-${i}`}
+                  src={CARS[car.carType || 0]}
+                  alt="car"
                   style={{
                     position: "absolute",
-                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
-                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
-                    transform: "translate(-50%, -50%)",
-                    width: selectorFrame === 1 ? 125 : 105,
-                    height: selectorFrame === 1 ? 125 : 105,
-                    zIndex: 51, // Above coin
+                    left: (car.col - firstVisibleCol) * COL_WIDTH,
+                    top: car.y * (800 / LANES),
+                    width: COL_WIDTH,
+                    height: (800 / LANES),
+                    zIndex: isDying ? 200 : 50, // above chicken when dying
+                    imageRendering: "pixelated",
                     pointerEvents: "none"
                   }}
                 />
-              )}
-            </React.Fragment>
-          ))}
-          {/* Render background cars globally for correct camera movement */}
-          {backgroundCars.map((car, i) => (
-            <img
-              key={`bg-car-${i}`}
-              src={CARS[car.carType]}
-              alt="background car"
-              style={{
-                position: "absolute",
-                left: car.col * COL_WIDTH,
-                top: car.y * (800 / LANES),
-                width: COL_WIDTH,
-                height: (800 / LANES),
-                zIndex: 15, // Above trees but below coins and chicken
-                imageRendering: "pixelated",
-                pointerEvents: "none",
-                opacity: 1 // Normal opacity
-              }}
-            />
-          ))}
-        </motion.div>
-        {/* Chicken absolutely positioned inside board container */}
-        <img
-          src={isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]}
-          alt="chicken"
-          style={{
-            position: "absolute",
-            left: (chickenAnimRef.current.col - firstVisibleCol) * COL_WIDTH + COL_WIDTH * 0.5,
-            top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
-            transform: "translate(-50%, -50%)",
-            width: 100,
-            height: 100,
-            zIndex: 100, // always above trees above him
-            imageRendering: "pixelated",
-            pointerEvents: "none",
-            transition: "left 0.3s ease-out"
-          }}
-          className="chicken-sprite"
-        />
-        {/* Cars absolutely positioned inside board container */}
-        {carPositions.map((car, i) => (
-          <img
-            key={`car-${i}`}
-            src={CARS[car.carType || 0]}
-            alt="car"
-            style={{
-              position: "absolute",
-              left: (car.col - firstVisibleCol) * COL_WIDTH,
-              top: car.y * (800 / LANES),
-              width: COL_WIDTH,
-              height: (800 / LANES),
-              zIndex: isDying ? 200 : 50, // above chicken when dying
-              imageRendering: "pixelated",
-              pointerEvents: "none"
-            }}
-          />
-        ))}
+              ))}
 
 
-        {/* Eagles absolutely positioned inside board container */}
-        {eaglePositions.map((eagle, i) => (
-          <motion.img
-            key={`eagle-${i}`}
-            src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
-            alt="eagle"
-            initial={{ scale: 1, opacity: 0, x: 0 }}
-            animate={{
-              x: (eagle.x - firstVisibleCol) * COL_WIDTH,
-              scale: 1,
-              opacity: 1,
-              transition: { duration: 0.3, ease: "easeOut" }
-            }}
-            exit={{ scale: 1, opacity: 0 }}
-            style={{
-              position: "absolute",
-              left: 0,
-              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
-              transform: "translateY(-50%)",
-              width: 200, // Bigger
-              height: 140, // Bigger
-              zIndex: isDying ? 200 : 25, // above chicken when dying
-              imageRendering: "pixelated",
-              pointerEvents: "none"
-            }}
-          />
-        ))}
-      </div>
-      {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
-      {win && <div style={{ fontSize: 32, color: "lime" }}>You Win!</div>}
-      
-      {/* Game Footer Controls */}
-      <div className="game-footer-bar">
-        <div className="game-footer-bg">
-          <div className="game-footer-flex">
-            {/* Mobile Controls */}
-            <div className="game-footer-mobile">
-              <div className="footer-section">
-                <span className="footer-label">Difficulty</span>
-                <div className="footer-btn-row">
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
-                </div>
-              </div>
-              <div className="footer-section">
-                <span className="footer-label">Bet Amount: <span className="footer-bet-amount">$8</span></span>
-                <div className="footer-btn-row">
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                  <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
-                </div>
-              </div>
-              <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+              {/* Eagles absolutely positioned inside board container */}
+              {eaglePositions.map((eagle, i) => (
+                <motion.img
+                  key={`eagle-${i}`}
+                  src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
+                  alt="eagle"
+                  initial={{ scale: 1, opacity: 0, x: 0 }}
+                  animate={{
+                    x: (eagle.x - firstVisibleCol) * COL_WIDTH,
+                    scale: 1,
+                    opacity: 1,
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
+                  exit={{ scale: 1, opacity: 0 }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
+                    transform: "translateY(-50%)",
+                    width: 200, // Bigger
+                    height: 140, // Bigger
+                    zIndex: isDying ? 200 : 25, // above chicken when dying
+                    imageRendering: "pixelated",
+                    pointerEvents: "none"
+                  }}
+                />
+              ))}
             </div>
-            {/* Desktop Controls */}
-            <div className="game-footer-desktop">
-              <div className="footer-section">
-                <span className="footer-label">Difficulty</span>
-                <div className="footer-btn-row desktop">
-                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                  <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
-                </div>
-              </div>
-              <div className="footer-section bet-section">
-                <span className="footer-label">Bet Amount</span>
-                <div className="footer-bet-row">
-                  <div className="footer-bet-amount">$8</div>
-                  <div className="footer-btn-row desktop">
-                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                    <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+            {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
+            {win && <div style={{ fontSize: 32, color: "lime" }}>You Win!</div>}
+            
+            {/* Game Footer Controls */}
+            <div className="game-footer-bar">
+              <div className="game-footer-bg">
+                <div className="game-footer-flex">
+                  {/* Mobile Controls */}
+                  <div className="game-footer-mobile">
+                    <div className="footer-section">
+                      <span className="footer-label">Difficulty</span>
+                      <div className="footer-btn-row">
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                      </div>
+                    </div>
+                    <div className="footer-section">
+                      <span className="footer-label">Bet Amount: <span className="footer-bet-amount">$8</span></span>
+                      <div className="footer-btn-row">
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                      </div>
+                    </div>
+                    <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+                  </div>
+                  {/* Desktop Controls */}
+                  <div className="game-footer-desktop">
+                    <div className="footer-section">
+                      <span className="footer-label">Difficulty</span>
+                      <div className="footer-btn-row desktop">
+                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                      </div>
+                    </div>
+                    <div className="footer-section bet-section">
+                      <span className="footer-label">Bet Amount</span>
+                      <div className="footer-bet-row">
+                        <div className="footer-bet-amount">$8</div>
+                        <div className="footer-btn-row desktop">
+                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                          <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
                   </div>
                 </div>
               </div>
-              <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 }
