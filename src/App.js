@@ -629,60 +629,6 @@ useEffect(() => {
                       }}
                     />
                   )}
-                  {/* Coin only in chicken's lane, on roads, between crosswalks */}
-                  {l === CENTER_LANE && board[CENTER_LANE][c].hasCoin && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: "50%",
-                        top: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: 56,
-                        height: 56,
-                        zIndex: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                      }}
-                    >
-                      <img
-                        src={COIN}
-                        alt="coin"
-                        style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
-                      />
-                      <span className="pixel-font" style={{
-                        position: "relative",
-                        zIndex: 10,
-                        color: "#fff",
-                        fontWeight: "bold",
-                        fontSize: 20,
-                        textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
-                      }}>+{(0.33 * c).toFixed(2)}x</span>
-                    </div>
-                  )}
-                  {/* Claimed coin marker (gold coin) for previously claimed coins */}
-                  {l === CENTER_LANE && claimedCoins.includes(c) && c < player.col && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: "50%",
-                        top: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: 75,
-                        height: 75,
-                        zIndex: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                      }}
-                    >
-                      <img
-                        src={COIN_FRAME}
-                        alt="claimed coin"
-                        style={{ width: 75, height: 75, imageRendering: "pixelated", position: "absolute", inset: 0 }}
-                      />
-                    </div>
-                  )}
                   {/* Car in this lane/column (top to bottom) */}
                   {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
                     <motion.img
@@ -752,6 +698,65 @@ useEffect(() => {
                 pointerEvents: "none"
               }}
             />
+          ))}
+          {/* Render all coins globally for correct z-index */}
+          {board[CENTER_LANE].map((tile, c) => (
+            <React.Fragment key={`coin-${c}`}>
+              {/* Coin only in chicken's lane, on roads, between crosswalks */}
+              {tile.hasCoin && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                    transform: "translate(-50%, -50%)",
+                    width: 56,
+                    height: 56,
+                    zIndex: 50,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <img
+                    src={COIN}
+                    alt="coin"
+                    style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                  />
+                  <span className="pixel-font" style={{
+                    position: "relative",
+                    zIndex: 10,
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: 20,
+                    textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
+                  }}>+{(0.33 * c).toFixed(2)}x</span>
+                </div>
+              )}
+              {/* Claimed coin marker (gold coin) for previously claimed coins */}
+              {claimedCoins.includes(c) && c < player.col && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                    transform: "translate(-50%, -50%)",
+                    width: 75,
+                    height: 75,
+                    zIndex: 50,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <img
+                    src={COIN_FRAME}
+                    alt="claimed coin"
+                    style={{ width: 75, height: 75, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                  />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </motion.div>
         {/* Chicken absolutely positioned inside board container */}
