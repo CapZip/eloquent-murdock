@@ -653,7 +653,7 @@ useEffect(() => {
                           top: 0,
                           width: COL_WIDTH, // Full lane width
                           height: (800 / LANES), // Full lane height
-                          zIndex: 25, // Much higher than chicken (zIndex: 10)
+                          zIndex: 50, // Much much higher than chicken (zIndex: 10)
                           imageRendering: "pixelated"
                         }}
                     />
@@ -703,16 +703,38 @@ useEffect(() => {
             transition: "left 0.3s ease-out"
           }}
           className="chicken-sprite"
-          onLoad={() => {
-            console.log('Chicken frame loaded:', chickenAnimRef.current.frame, 'src:', isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]);
-          }}
         />
-        
+        {/* Cars absolutely positioned inside board container */}
+        {carPositions.map((car, i) => (
+          <motion.img
+            key={`car-${i}`}
+            src={CAR}
+            alt="car"
+            initial={{ scale: 1, opacity: 0, y: 0 }}
+            animate={{
+              y: car.y * (800 / LANES),
+              scale: 1,
+              opacity: 1,
+              transition: { duration: 0.3, ease: "easeOut" }
+            }}
+            exit={{ scale: 1, opacity: 0 }}
+            style={{
+              position: "absolute",
+              left: (car.col - firstVisibleCol) * COL_WIDTH,
+              top: car.lane * (800 / LANES),
+              width: COL_WIDTH,
+              height: (800 / LANES),
+              zIndex: 50,
+              imageRendering: "pixelated",
+              pointerEvents: "none"
+            }}
+          />
+        ))}
         {/* Eagles absolutely positioned inside board container */}
         {eaglePositions.map((eagle, i) => (
           <motion.img
             key={`eagle-${i}`}
-            src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]} // Animate eagle frames
+            src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
             alt="eagle"
             initial={{ scale: 1, opacity: 0, x: 0 }}
             animate={{
@@ -725,11 +747,11 @@ useEffect(() => {
             style={{
               position: "absolute",
               left: 0,
-              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2,
+              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 20,
               transform: "translateY(-50%)",
-              width: 120, // Eagle size
+              width: 120,
               height: 80,
-              zIndex: 25, // Much higher than chicken (zIndex: 10)
+              zIndex: 25,
               imageRendering: "pixelated",
               pointerEvents: "none"
             }}
