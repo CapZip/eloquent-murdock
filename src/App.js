@@ -7,6 +7,7 @@ const COL_WIDTH = 140;
 const TILE_SIZE = 100;
 const VISIBLE_COLS = 9;
 const CENTER_LANE = Math.floor(LANES / 2);
+const PAVEMENT_START_COL = 4;
 
 const CHICKEN = process.env.PUBLIC_URL + "/game/Chicken Walk V2/Chicken Walk V2 000.png";
 const CAR = process.env.PUBLIC_URL + "/game/Car Yellow V2 000.png";
@@ -142,6 +143,11 @@ function makeCars(board) {
   return [];
 }
 
+// Responsive visible columns
+function getVisibleCols() {
+  return window.innerWidth <= 768 ? 3 : 9;
+}
+
 export default function App() {
   const [board, setBoard] = useState(makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
@@ -162,6 +168,7 @@ export default function App() {
   const [claimedCoins, setClaimedCoins] = useState([]); // Array of claimed coin columns
   // Prevent holding spacebar
   const spaceHeld = useRef(false);
+  const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   
   // Preload all images on mount
   useEffect(() => {
@@ -180,7 +187,24 @@ export default function App() {
   }, []);
 
   // Calculate first visible column for centering
-  const firstVisibleCol = Math.max(0, player.col - Math.floor(VISIBLE_COLS / 2));
+  let firstVisibleCol;
+  const halfVisible = Math.floor(visibleCols / 2);
+  if (window.innerWidth <= 768) {
+    const progress = player.col - PAVEMENT_START_COL;
+    if (player.col === PAVEMENT_START_COL) {
+      firstVisibleCol = player.col; // Chicken on the left
+    } else if (progress % 2 === 0) {
+      firstVisibleCol = player.col - 1; // Chicken centered
+    } else {
+      firstVisibleCol = player.col; // Chicken on the left, camera jumps
+    }
+    if (firstVisibleCol > board[0].length - visibleCols) {
+      firstVisibleCol = board[0].length - visibleCols; // Clamp to end
+    }
+  } else {
+    firstVisibleCol = Math.max(0, player.col - halfVisible);
+  }
+  const scrollOffset = -firstVisibleCol * COL_WIDTH;
 
   // Animate cars moving top to bottom
   useEffect(() => {
@@ -431,8 +455,13 @@ useEffect(() => {
     if (player.col === FINAL_COL) setWin(true);
   }, [player, carPositions, board]);
 
-  // Calculate scroll offset so chicken is always in the center column
-  const scrollOffset = -(player.col - Math.floor(VISIBLE_COLS / 2)) * COL_WIDTH;
+  useEffect(() => {
+    function handleResize() {
+      setVisibleCols(getVisibleCols());
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Render
   if (!imagesLoaded) {
@@ -449,22 +478,22 @@ useEffect(() => {
 
   return (
     <div className="App">
-      <h1>UNCROSSABLE</h1>
-      <div style={{ fontSize: 32, margin: 8, color: "#fff", textShadow: "2px 2px 8px #000" }}>
+      <h1 className="pixel-font">UNCROSSABLE</h1>
+      <div className="pixel-font" style={{ fontSize: 32, margin: 8, color: "#fff", textShadow: "2px 2px 8px #000" }}>
         Score: {score.toFixed(2)} | Hash: {hash} | Progress: {player.col - 4}/{FINAL_COL - 4}
         {gameOver && !isDying && <span> | <b>Game Over!</b></span>} 
         {win && <span style={{ color: 'lime' }}> | <b>WIN!</b></span>}
         {cashedOut && <span style={{ color: 'gold' }}> | <b>CASHED OUT!</b></span>}
         {isDying && <span style={{ color: 'red' }}> | <b>💀 DYING...</b></span>}
       </div>
-      <div style={{ fontSize: 16, margin: 4, color: "#ccc", textShadow: "1px 1px 4px #000" }}>
+      <div className="pixel-font" style={{ fontSize: 16, margin: 4, color: "#ccc", textShadow: "1px 1px 4px #000" }}>
         Press SPACE to move forward | Press C to cashout | Tap screen to move
       </div>
       <div
         className="game-board"
         style={{
           position: "relative",
-          width: VISIBLE_COLS * COL_WIDTH,
+          width: visibleCols * COL_WIDTH,
           height: 800,
           margin: "24px auto",
           background: COLORS.grass,
@@ -627,7 +656,7 @@ useEffect(() => {
                         alt="coin"
                         style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
                       />
-                      <span style={{
+                      <span className="pixel-font" style={{
                         position: "relative",
                         zIndex: 10,
                         color: "#fff",

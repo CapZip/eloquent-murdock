@@ -1,19 +1,20 @@
+@font-face {
+  font-family: 'Pixel Digivolve';
+  src: url('https://c4pt5c-3000.csb.app/game/PixelDigivolve.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body, .pixel-font {
+  font-family: 'Pixel Digivolve', monospace, sans-serif;
+}
+
 .App {
   font-family: sans-serif;
   text-align: center;
   min-height: 100vh;
   padding: 10px;
   box-sizing: border-box;
-}
-
-/* Game board responsive styles */
-.game-board {
-  /* Desktop: full size */
-}
-
-/* Chicken sprite responsive positioning */
-.chicken-sprite {
-  /* Desktop positioning handled by inline styles */
 }
 
 /* Make dying chicken slightly bigger to match alive chicken */
