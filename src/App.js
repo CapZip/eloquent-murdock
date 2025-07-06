@@ -152,7 +152,11 @@ function makeBoard() {
         grassDecal = null;
         grassDecalStyle = null;
       }
-      const hasCoin = l === CENTER_LANE && (type === "road" || type === "grass") && c >= 4 && c < FINAL_COL;
+      // Place coins on roads, grass, and the final pavement (finish)
+      const hasCoin = l === CENTER_LANE && (
+        ((type === "road" || type === "grass") && c >= 4 && c < FINAL_COL) ||
+        (type === "pavement" && c === FINAL_COL)
+      );
       row.push({ type, deco, hasCoin, hasCar: false, grassDecal, grassDecalStyle });
     }
     board.push(row);
@@ -606,10 +610,11 @@ export default function App() {
           <div className="App">
             {/* Game Header */}
             <div className="game-header">
-              {/* Mobile & desktop: single row, title left, amount+menu right */}
-              <div className="game-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              {/* Single row: title left, right side varies by device */}
+              <div className="game-header-row">
                 <div className="game-header-title">UNCROSSABLE</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {/* Desktop: right side menu */}
+                <div className="game-header-desktop-menu">
                   <div className="game-header-coins">
                     <span>100</span>
                     {selectedToken === "SOLANA"
@@ -617,28 +622,35 @@ export default function App() {
                       : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
                     }
                   </div>
-                  <button className="mobile-menu-btn sm:hidden" onClick={() => setShowMobileMenu(v => !v)}>
+                  <select
+                    className="game-header-selector"
+                    value={selectedToken}
+                    onChange={e => setSelectedToken(e.target.value)}
+                  >
+                    {tokenOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
+                    ))}
+                  </select>
+                  <div style={{ minWidth: 120 }}>
+                    <WalletMultiButton />
+                  </div>
+                  <button className="game-header-leaderboard">
+                    <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
+                  </button>
+                </div>
+                {/* Mobile: amount and menu button */}
+                <div className="game-header-mobile-menu">
+                  <div className="game-header-coins">
+                    <span>100</span>
+                    {selectedToken === "SOLANA"
+                      ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+                      : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
+                    }
+                  </div>
+                  <button className="mobile-menu-btn" onClick={() => setShowMobileMenu(v => !v)}>
                     <svg className="w-7 h-7" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                   </button>
                 </div>
-              </div>
-              {/* Desktop: Options Selector, Wallet, Leaderboard */}
-              <div className="game-header-desktop-menu">
-                <select
-                  className="game-header-selector"
-                  value={selectedToken}
-                  onChange={e => setSelectedToken(e.target.value)}
-                >
-                  {tokenOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
-                  ))}
-                </select>
-                <div style={{ minWidth: 120 }}>
-                  <WalletMultiButton />
-                </div>
-                <button className="game-header-leaderboard">
-                  <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
-                </button>
               </div>
             </div>
             {/* Mobile Menu Overlay */}
