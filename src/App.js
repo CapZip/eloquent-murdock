@@ -45,11 +45,10 @@ const COLUMN_TYPES = [
   "road", "road", // 9-10
   "grass", // 11
   "road", "road", "road", // 12-14
-  "grass", // 15
-  "pavement", // 16 (finish)
-  "grass", "grass", "grass", "grass" // 17-20 (after finish)
+  "pavement", // 15 (finish)
+  "grass", "grass", "grass", "grass" // 16-19 (after finish)
 ];
-const FINAL_COL = 16; // The actual finish column (pavement)
+const FINAL_COL = 15; // The actual finish column (pavement)
 
 // Generate hash-based difficulty (10-25)
 function generateHash() {
