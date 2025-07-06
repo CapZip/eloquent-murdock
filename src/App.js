@@ -205,7 +205,7 @@ export default function App() {
   
   // Drag state variables
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [manualScrollOffset, setManualScrollOffset] = useState(0);
   const [manualCameraYOffset, setManualCameraYOffset] = useState(0);
@@ -539,13 +539,16 @@ export default function App() {
 
   const handlePointerUp = (e) => {
     if (!isDragging) return;
-    e.preventDefault();
     
     setIsDragging(false);
-    setDragStart({ x: 0, y: 0 });
+    setDragStart(null);
     setDragOffset({ x: 0, y: 0 });
-    setInitialScrollOffset(0);
-    setHasManualPosition(true); // Mark that user has manually positioned the camera
+    
+    // Check if this was a significant drag (not just a click)
+    const dragDistance = Math.abs(dragOffset.x);
+    if (dragDistance > 5) {
+      setHasManualPosition(true); // Mark that user has manually positioned the camera
+    }
     
     // Release pointer capture
     if (dragRef.current) {
@@ -705,6 +708,21 @@ export default function App() {
   }, []);
 
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Difficulty settings and multipliers
+  const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard', 'daredevil'
+  
+  const DIFFICULTY_MULTIPLIERS = {
+    easy: [1.00, 1.09, 1.20, 1.33, 1.50, 1.71, 2.00, 2.40, 3.00, 3.43, 5.00],
+    medium: [1.09, 1.43, 1.94, 2.71, 3.94, 6.07, 10.04, 18.40, 26.29, 39.43, 63.09],
+    hard: [1.20, 1.52, 1.94, 2.51, 4.39, 8.24, 11.68, 25.48, 39.63, 64.40, 110.40],
+    daredevil: [1.60, 2.74, 4.85, 8.90, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87]
+  };
+
+  // Difficulty button handlers
+  const handleDifficultyChange = (newDifficulty) => {
+    setDifficulty(newDifficulty);
+  };
 
   // Render
   if (!imagesLoaded) {
@@ -1039,7 +1057,7 @@ export default function App() {
                           fontWeight: "bold",
                           fontSize: 16,
                           textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
-                        }}>+{(0.33 * c).toFixed(2)}x</span>
+                        }}>+{DIFFICULTY_MULTIPLIERS[difficulty][Math.min(c - 5, DIFFICULTY_MULTIPLIERS[difficulty].length - 1)].toFixed(2)}x</span>
                       </div>
                     )}
                     {/* Claimed coin marker (gold coin) for previously claimed coins */}
@@ -1181,10 +1199,10 @@ export default function App() {
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row">
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
                       </div>
                     </div>
                     <div className="footer-section">
@@ -1203,10 +1221,10 @@ export default function App() {
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row desktop">
-                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                        <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                        <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
                       </div>
                     </div>
                     <div className="footer-section bet-section">
