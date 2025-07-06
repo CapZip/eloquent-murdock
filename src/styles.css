@@ -299,6 +299,7 @@ button:disabled {
   width: 100%;
   max-width: 220px;
   margin: 0 auto;
+  margin-top: 15px;
   padding: 10px 0;
   font-size: 18px;
   font-weight: bold;

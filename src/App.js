@@ -1199,6 +1199,7 @@ export default function App() {
                   </div>
                   {/* Desktop Controls */}
                   <div className="game-footer-desktop">
+                  <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row desktop">
@@ -1220,7 +1221,7 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+      
                   </div>
                 </div>
               </div>
