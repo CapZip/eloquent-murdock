@@ -45,9 +45,9 @@ const COLUMN_TYPES = [
 ];
 const FINAL_COL = 16; // The actual finish column (pavement)
 
-// Generate hash-based difficulty (4-15)
+// Generate hash-based difficulty (10-25)
 function generateHash() {
-  return Math.floor(Math.random() * 12) + 4; // 4 to 15
+  return Math.floor(Math.random() * 16) + 10; // 10 to 25
 }
 
 // Preload all chicken frames for faster loading
@@ -105,7 +105,7 @@ function makeBoard() {
   const board = [];
   for (let l = 0; l < LANES; l++) {
     const row = [];
-    for (let c = 0; c <= FINAL_COL; c++) {
+    for (let c = 0; c < COLUMN_TYPES.length; c++) { // Generate all columns for visuals
       const type = COLUMN_TYPES[c];
       let deco = null;
       let grassDecal = null;
@@ -128,7 +128,7 @@ function makeBoard() {
           zIndex: 0
         };
       }
-      const hasCoin = l === CENTER_LANE && (type === "road" || type === "grass") && c >= 4 && c !== FINAL_COL;
+      const hasCoin = l === CENTER_LANE && (type === "road" || type === "grass") && c >= 4 && c < FINAL_COL;
       row.push({ type, deco, hasCoin, hasCar: false, grassDecal, grassDecalStyle });
     }
     board.push(row);
@@ -229,7 +229,7 @@ useEffect(() => {
   const interval = setInterval(() => {
     setEaglePositions((oldEagles) => {
       const newEagles = oldEagles.map((eagle) => {
-        const newX = eagle.x + 0.4; // Move right
+        const newX = eagle.x + 0.28; // Move right, slower
         // Check if eagle is hitting the chicken (player's column)
         if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
           // Eagle is hitting chicken - trigger death animation
@@ -340,9 +340,9 @@ useEffect(() => {
       
       // Hash-based danger check AFTER movement animation completes
       if (endCol >= 4 && endCol < FINAL_COL) {
-        const dangerThreshold = hash / 100; // Much lower base danger
-        const progressMultiplier = (endCol - 4) / (FINAL_COL - 4); // Gets harder as you progress
-        const finalDanger = dangerThreshold * (1 + progressMultiplier * 0.5); // Much gentler scaling
+        const dangerThreshold = hash / 100; // base danger
+        const progressMultiplier = (endCol - 4) / (FINAL_COL - 4); // progress
+        const finalDanger = dangerThreshold * (1 + progressMultiplier * 1.2); // steeper scaling
         
         console.log(`Hash: ${hash}, Col: ${endCol}, Danger: ${(finalDanger * 100).toFixed(2)}%`);
         
@@ -477,13 +477,13 @@ useEffect(() => {
             top: 0,
             left: scrollOffset,
             height: "100%",
-            width: (FINAL_COL + 1) * COL_WIDTH,
+            width: board[0].length * COL_WIDTH,
             display: "flex"
           }}
           animate={{ left: scrollOffset }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
         >
-          {Array.from({ length: FINAL_COL + 1 }).map((_, c) => (
+          {Array.from({ length: board[0].length }).map((_, c) => (
             <div
               key={`col-${c}`}
               style={{
@@ -747,10 +747,10 @@ useEffect(() => {
             style={{
               position: "absolute",
               left: 0,
-              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 20,
+              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
               transform: "translateY(-50%)",
-              width: 120,
-              height: 80,
+              width: 150,
+              height: 100,
               zIndex: 25,
               imageRendering: "pixelated",
               pointerEvents: "none"
