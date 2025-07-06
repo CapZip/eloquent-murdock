@@ -220,6 +220,22 @@ export default function App() {
   }
   const scrollOffset = -firstVisibleCol * COL_WIDTH;
 
+  // Calculate vertical camera offset for mobile
+  let cameraYOffset = 0;
+  if (window.innerWidth <= 768) {
+    const boardHeight = 800;
+    const laneHeight = boardHeight / LANES;
+    const boardPixelHeight = boardHeight;
+    const containerHeight = boardHeight; // .game-board height
+    const chickenY = CENTER_LANE * laneHeight + laneHeight / 2;
+    const centerY = containerHeight / 2;
+    let desiredOffset = centerY - chickenY;
+    // Clamp so we don't scroll past the top or bottom
+    const maxOffset = 0;
+    const minOffset = containerHeight - boardPixelHeight;
+    cameraYOffset = Math.max(Math.min(desiredOffset, maxOffset), minOffset);
+  }
+
   // Animate cars moving top to bottom
   useEffect(() => {
     if (gameOver || win) return;
@@ -318,17 +334,37 @@ useEffect(() => {
       
       // Find a random road column ahead of the player's current position (but not the next column)
       const roadColumns = [];
-      for (let col = player.col + 2; col < FINAL_COL; col++) { // Skip the next column the player will jump to
+      for (let col = player.col + 2; col < FINAL_COL; col++) {
         if (board[randomLane][col].type === "road") {
           roadColumns.push(col);
         }
       }
       
+      // Bias spawn toward visible columns on mobile
+      let spawnCol = null;
       if (roadColumns.length > 0 && Math.random() < 0.7) { // 70% chance to spawn
-        const randomCol = roadColumns[Math.floor(Math.random() * roadColumns.length)];
+        let candidateCols = roadColumns;
+        if (window.innerWidth <= 768) {
+          // On mobile, bias toward visible columns
+          const visibleStart = firstVisibleCol;
+          const visibleEnd = firstVisibleCol + visibleCols - 1;
+          const visibleColsArr = roadColumns.filter(col => col >= visibleStart && col <= visibleEnd);
+          // 80% chance to pick from visible, 20% from all
+          if (visibleColsArr.length && Math.random() < 0.8) {
+            candidateCols = visibleColsArr;
+          }
+        }
+        spawnCol = candidateCols[Math.floor(Math.random() * candidateCols.length)];
+      }
+      
+      // Prevent overlapping: don't spawn if a car is already in this lane/col near the top
+      if (
+        spawnCol !== null &&
+        !backgroundCars.some(car => car.lane === randomLane && car.col === spawnCol && car.y < 1)
+      ) {
         setBackgroundCars(prev => [...prev, {
           lane: randomLane,
-          col: randomCol,
+          col: spawnCol,
           y: -1.1, // Start above the board
           speed: 0.35, // Same speed as death cars
           carType: Math.floor(Math.random() * CARS.length) // Random car color
@@ -356,10 +392,6 @@ useEffect(() => {
   // Handle keyboard and touch controls
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === "Space" && !spaceHeld.current && !animating.current && !gameOver && !win && !cashedOut && !isDying) {
-        spaceHeld.current = true;
-        moveChicken();
-      }
       if (e.code === "KeyC" && !gameOver && !win && !cashedOut && player.col > 4) {
         // Cashout
         setCashedOut(true);
@@ -577,11 +609,17 @@ useEffect(() => {
           width: visibleCols * COL_WIDTH,
           height: 800,
           margin: "24px auto",
+          marginTop: cameraYOffset,
           background: COLORS.grass,
           border: "4px solid #444",
           overflow: "hidden",
           boxShadow: "0 8px 32px #000a",
           boxSizing: "border-box"
+        }}
+        onClick={() => {
+          if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
+            moveChicken();
+          }
         }}
       >
         {/* Board grid */}
@@ -592,7 +630,8 @@ useEffect(() => {
             left: scrollOffset,
             height: "100%",
             width: board[0].length * COL_WIDTH,
-            display: "flex"
+            display: "flex",
+            transform: `translateY(${cameraYOffset}px)`
           }}
           animate={{ left: scrollOffset }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
