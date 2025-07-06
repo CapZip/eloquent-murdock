@@ -45,10 +45,11 @@ const COLUMN_TYPES = [
   "road", "road", // 9-10
   "grass", // 11
   "road", "road", "road", // 12-14
-  "pavement", // 15 (finish)
-  "grass", "grass", "grass", "grass" // 16-19 (after finish)
+  "grass", // 15
+  "pavement", // 16 (finish)
+  "grass", "grass", "grass", "grass" // 17-20 (after finish)
 ];
-const FINAL_COL = 15; // The actual finish column (pavement)
+const FINAL_COL = 16; // The actual finish column (pavement)
 
 // Generate hash-based difficulty (10-25)
 function generateHash() {
@@ -602,16 +603,32 @@ export default function App() {
 
   return (
     <div className="App">
-      <h1 className="pixel-font">UNCROSSABLE</h1>
-      <div className="pixel-font" style={{ fontSize: 32, margin: 8, color: "#fff", textShadow: "2px 2px 8px #000" }}>
-        Score: {score.toFixed(2)} | Hash: {hash} | Progress: {player.col - 4}/{FINAL_COL - 4}
-        {gameOver && !isDying && <span> | <b>Game Over!</b></span>} 
-        {win && <span style={{ color: 'lime' }}> | <b>WIN!</b></span>}
-        {cashedOut && <span style={{ color: 'gold' }}> | <b>CASHED OUT!</b></span>}
-        {isDying && <span style={{ color: 'red' }}> | <b>💀 DYING...</b></span>}
-      </div>
-      <div className="pixel-font" style={{ fontSize: 16, margin: 4, color: "#ccc", textShadow: "1px 1px 4px #000" }}>
-        Press SPACE to move forward | Press C to cashout | Tap screen to move
+      {/* Game Header */}
+      <div className="game-header">
+        <div className="game-header-title">UNCROSSABLE</div>
+        <div className="game-header-right">
+          {/* Options Selector */}
+          <select className="game-header-selector">
+            <option>Option 1</option>
+            <option>Option 2</option>
+            <option>Option 3</option>
+            <option>Option 4</option>
+          </select>
+          {/* Coin Display */}
+          <div className="game-header-coins">
+            <span>100</span>
+            <span role="img" aria-label="dog">🐕</span>
+          </div>
+          {/* Wallet Button */}
+          <button className="game-header-wallet">
+            <img src="/game/UI/charticon.svg" alt="Phantom" style={{ width: 16, height: 16, marginRight: 4 }} />
+            Hpem...yTmE
+          </button>
+          {/* Leaderboard Icon */}
+          <button className="game-header-leaderboard">
+            <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
+          </button>
+        </div>
       </div>
       <div
         className="game-board"
@@ -620,9 +637,9 @@ export default function App() {
           width: visibleCols * COL_WIDTH,
           height: 800,
           margin: "24px auto",
+          marginBottom: "0",
           marginTop: cameraYOffset,
           background: COLORS.grass,
-          border: "4px solid #444",
           overflow: "hidden",
           boxShadow: "0 8px 32px #000a",
           boxSizing: "border-box"
@@ -982,62 +999,59 @@ export default function App() {
       {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
       {win && <div style={{ fontSize: 32, color: "lime" }}>You Win!</div>}
       
-      {/* Mobile Touch Controls */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        gap: '20px', 
-        marginTop: '20px',
-        padding: '10px'
-      }}>
-        <button
-          onClick={() => {
-            if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
-              moveChicken();
-            }
-          }}
-          disabled={animating.current || gameOver || win || cashedOut || isDying}
-          style={{
-            padding: '15px 30px',
-            fontSize: '18px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            minWidth: '120px'
-          }}
-        >
-          MOVE
-        </button>
-        
-        <button
-          onClick={() => {
-            if (!gameOver && !win && !cashedOut && player.col > 4 && !isDying) {
-              setCashedOut(true);
-              setScore(prev => prev * (1 + (player.col - 4) * 0.5));
-            }
-          }}
-          disabled={gameOver || win || cashedOut || player.col <= 4 || isDying}
-          style={{
-            padding: '15px 30px',
-            fontSize: '18px',
-            backgroundColor: '#FF9800',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-            minWidth: '120px'
-          }}
-        >
-          CASHOUT
-        </button>
-      </div>
-      
-      <div style={{ marginTop: 16 }}>
-        <b>Press Space to move right. Collect multipliers, avoid cars.</b>
+      {/* Game Footer Controls */}
+      <div className="game-footer-bar">
+        <div className="game-footer-bg">
+          <div className="game-footer-flex">
+            {/* Mobile Controls */}
+            <div className="game-footer-mobile">
+              <div className="footer-section">
+                <span className="footer-label">Difficulty</span>
+                <div className="footer-btn-row">
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                </div>
+              </div>
+              <div className="footer-section">
+                <span className="footer-label">Bet Amount: <span className="footer-bet-amount">$8</span></span>
+                <div className="footer-btn-row">
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                  <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                </div>
+              </div>
+              <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+            </div>
+            {/* Desktop Controls */}
+            <div className="game-footer-desktop">
+              <div className="footer-section">
+                <span className="footer-label">Difficulty</span>
+                <div className="footer-btn-row desktop">
+                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                  <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                  <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                </div>
+              </div>
+              <div className="footer-section bet-section">
+                <span className="footer-label">Bet Amount</span>
+                <div className="footer-bet-row">
+                  <div className="footer-bet-amount">$8</div>
+                  <div className="footer-btn-row desktop">
+                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                    <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                    <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                  </div>
+                </div>
+              </div>
+              <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

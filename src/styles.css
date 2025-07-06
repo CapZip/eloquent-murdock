@@ -7,19 +7,25 @@
 
 body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span {
   font-family: 'Minecraft', sans-serif !important;
+  padding: 0;
+  margin: 0;
 }
 
 .App {
   font-family: sans-serif;
   text-align: center;
   min-height: 100vh;
-  padding: 10px;
+  padding: 0;
+  margin: 0;
   box-sizing: border-box;
+  background: black;
 }
 
 /* Game board responsive styles */
 .game-board {
   /* Desktop: full size */
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 /* Chicken sprite responsive positioning */
@@ -36,8 +42,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 @media (max-width: 768px) {
   .chicken-sprite {
     /* Scale chicken down slightly on mobile */
-    width: 100px !important;
-    height: 100px !important;
+    width: 80px !important;
+    height: 80px !important;
   }
   
   .chicken-sprite[src*="Chicken Dead V2"] {
@@ -48,10 +54,6 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
-  .App{
-    margin: 0;
-    padding: 0;
-  }
   .App h1 {
     font-size: 24px;
     margin: 10px 0;
@@ -75,6 +77,14 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
     padding-top: 80px;
     box-sizing: border-box;
   }
+  
+  .App {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+  }
 }
 
 /* Prevent text selection on mobile */
@@ -93,4 +103,270 @@ button:active {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.game-header {
+  /* position: fixed; */
+  /* top: 0; */
+  /* left: 0; */
+  /* right: 0; */
+  height: 48px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  /* z-index: 50; */
+  font-family: 'Minecraft', sans-serif;
+}
+.game-header-title {
+  color: #fff;
+  font-weight: bold;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+.game-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.game-header-selector {
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 15px;
+  font-family: 'Minecraft', sans-serif;
+  font-weight: bold;
+}
+.game-header-coins {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 16px;
+}
+.game-header-wallet {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(90deg, #a259ff, #f246a9);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.game-header-wallet:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px #a259ff44;
+}
+.game-header-leaderboard {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.game-header-leaderboard:hover {
+  background: #222;
+}
+@media (max-width: 768px) {
+  .game-header {
+    height: 44px;
+    padding: 0 6px;
+  }
+  .game-header-title {
+    font-size: 15px;
+  }
+  .game-header-right {
+    gap: 6px;
+  }
+  .game-header-selector {
+    font-size: 13px;
+    padding: 2px 6px;
+  }
+  .game-header-coins {
+    font-size: 13px;
+  }
+  .game-header-wallet {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+  .game-header-leaderboard {
+    padding: 2px;
+  }
+}
+
+/* Game Footer Bar Styles */
+.game-footer-bar {
+  width: 100%;
+}
+.game-footer-bg {
+  background: #000;
+  border-top: 2px solid #444;
+  padding: 8px 8px 8px 8px;
+}
+.game-footer-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.game-footer-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.game-footer-desktop {
+  display: none;
+}
+.footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.footer-label {
+  color: #bbb;
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.footer-bet-amount {
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 16px;
+  min-width: 40px;
+}
+.footer-btn-row {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+.footer-btn-wrap {
+  position: relative;
+  flex: 1;
+}
+.footer-btn {
+  position: relative;
+  width: 100%;
+  padding: 8px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ccc;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: color 0.1s;
+  image-rendering: pixelated;
+}
+.footer-btn.active {
+  color: #fff;
+}
+.footer-btn:hover {
+  color: #fff;
+}
+.footer-btn-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.footer-btn-text {
+  position: relative;
+  z-index: 1;
+}
+.footer-big-btn {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+  padding: 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #111;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: filter 0.1s;
+  image-rendering: pixelated;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-big-btn:hover {
+  filter: brightness(1.1);
+}
+.footer-big-btn-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.footer-big-btn-text {
+  position: relative;
+  z-index: 1;
+}
+.w-full { width: 100%; }
+.min-w-140 { min-width: 140px; }
+
+@media (min-width: 768px) {
+  .game-footer-flex {
+    flex-direction: row;
+    gap: 24px;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+  .game-footer-mobile {
+    display: none;
+  }
+  .game-footer-desktop {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: stretch;
+    width: 100%;
+  }
+  .footer-section {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .footer-bet-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .footer-btn-row.desktop {
+    gap: 8px;
+  }
+  .footer-big-btn {
+    max-width: 220px;
+    font-size: 20px;
+    padding: 12px 0;
+  }
+  .footer-btn {
+    font-size: 18px;
+    padding: 10px 0;
+  }
+  .footer-label {
+    font-size: 17px;
+  }
 }
