@@ -631,15 +631,11 @@ useEffect(() => {
                   )}
                   {/* Coin only in chicken's lane, on roads, between crosswalks */}
                   {l === CENTER_LANE && board[CENTER_LANE][c].hasCoin && (
-                    <motion.div
-                      animate={{
-                        y: [0, -18, 0],
-                        transition: { duration: 1.2, repeat: Infinity, repeatType: "loop", ease: "easeInOut" }
-                      }}
+                    <div
                       style={{
                         position: "absolute",
-                        left: "28%",
-                        top: "34%",
+                        left: "50%",
+                        top: "50%",
                         transform: "translate(-50%, -50%)",
                         width: 56,
                         height: 56,
@@ -662,22 +658,18 @@ useEffect(() => {
                         fontSize: 20,
                         textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
                       }}>+{(0.33 * c).toFixed(2)}x</span>
-                    </motion.div>
+                    </div>
                   )}
                   {/* Claimed coin marker (gold coin) for previously claimed coins */}
                   {l === CENTER_LANE && claimedCoins.includes(c) && c < player.col && (
-                    <motion.div
-                      animate={{
-                        y: [0, -18, 0],
-                        transition: { duration: 1.2, repeat: Infinity, repeatType: "loop", ease: "easeInOut" }
-                      }}
+                    <div
                       style={{
                         position: "absolute",
-                        left: "28%",
-                        top: "34%",
+                        left: "50%",
+                        top: "50%",
                         transform: "translate(-50%, -50%)",
-                        width: 56,
-                        height: 56,
+                        width: 75,
+                        height: 75,
                         zIndex: 3,
                         display: "flex",
                         alignItems: "center",
@@ -687,9 +679,9 @@ useEffect(() => {
                       <img
                         src={COIN_FRAME}
                         alt="claimed coin"
-                        style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                        style={{ width: 75, height: 75, imageRendering: "pixelated", position: "absolute", inset: 0 }}
                       />
-                    </motion.div>
+                    </div>
                   )}
                   {/* Car in this lane/column (top to bottom) */}
                   {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
