@@ -50,11 +50,10 @@ const COLUMN_TYPES = [
   "road", "road", // 9-10
   "grass", // 11
   "road", "road", "road", // 12-14
-  "grass", // 15
-  "pavement", // 16 (finish)
-  "grass", "grass", "grass", "grass" // 17-20 (after finish)
+  "pavement", // 15 (finish)
+  "grass", "grass", "grass", "grass" // 16-19 (after finish)
 ];
-const FINAL_COL = 16; // The actual finish column (pavement)
+const FINAL_COL = 15; // The actual finish column (pavement)
 
 // Generate hash-based difficulty (10-25)
 function generateHash() {
@@ -430,29 +429,11 @@ export default function App() {
         spaceHeld.current = false;
       }
     };
-    
-    // Touch controls
-    const handleTouchStart = (e) => {
-      e.preventDefault();
-      if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
-        moveChicken();
-      }
-    };
-    
-    const handleTouchMove = (e) => {
-      e.preventDefault(); // Prevent scrolling
-    };
-    
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, [player, animating, gameOver, win, cashedOut]);
 
@@ -603,6 +584,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   // Render
   if (!imagesLoaded) {
     return (
@@ -623,9 +606,24 @@ export default function App() {
           <div className="App">
             {/* Game Header */}
             <div className="game-header">
-              <div className="game-header-title">UNCROSSABLE</div>
-              <div className="game-header-right">
-                {/* Options Selector */}
+              {/* Mobile & desktop: single row, title left, amount+menu right */}
+              <div className="game-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div className="game-header-title">UNCROSSABLE</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="game-header-coins">
+                    <span>100</span>
+                    {selectedToken === "SOLANA"
+                      ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+                      : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
+                    }
+                  </div>
+                  <button className="mobile-menu-btn sm:hidden" onClick={() => setShowMobileMenu(v => !v)}>
+                    <svg className="w-7 h-7" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+              {/* Desktop: Options Selector, Wallet, Leaderboard */}
+              <div className="game-header-desktop-menu">
                 <select
                   className="game-header-selector"
                   value={selectedToken}
@@ -635,24 +633,31 @@ export default function App() {
                     <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
                   ))}
                 </select>
-                {/* Coin Display */}
-                <div className="game-header-coins">
-                  <span>100</span>
-                  {selectedToken === "SOLANA"
-                    ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
-                    : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
-                  }
-                </div>
-                {/* Wallet Button */}
                 <div style={{ minWidth: 120 }}>
                   <WalletMultiButton />
                 </div>
-                {/* Leaderboard Icon */}
                 <button className="game-header-leaderboard">
                   <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
                 </button>
               </div>
             </div>
+            {/* Mobile Menu Overlay */}
+            {showMobileMenu && (
+              <div className="mobile-menu-overlay sm:hidden" onClick={() => setShowMobileMenu(false)}>
+                <div className="mobile-menu-content" onClick={e => e.stopPropagation()}>
+                  <div className="text-white text-sm font-bold mb-2">Select Token:</div>
+                  <button className={`flex items-center gap-2 px-3 py-2 rounded ${selectedToken === 'BONK' ? 'bg-gray-700' : 'hover:bg-gray-800'} transition-colors`} onClick={() => setSelectedToken('BONK')}><span className="text-orange-400 text-lg">🐕</span><span className="text-white">BONK</span></button>
+                  <button className={`flex items-center gap-2 px-3 py-2 rounded ${selectedToken === 'WIF' ? 'bg-gray-700' : 'hover:bg-gray-800'} transition-colors`} onClick={() => setSelectedToken('WIF')}><span className="text-blue-400 text-lg">🧢</span><span className="text-white">WIF</span></button>
+                  <button className={`flex items-center gap-2 px-3 py-2 rounded ${selectedToken === 'POPCAT' ? 'bg-gray-700' : 'hover:bg-gray-800'} transition-colors`} onClick={() => setSelectedToken('POPCAT')}><span className="text-purple-400 text-lg">🐱</span><span className="text-white">POPCAT</span></button>
+                  <button className={`flex items-center gap-2 px-3 py-2 rounded ${selectedToken === 'SOLANA' ? 'bg-gray-700' : 'hover:bg-gray-800'} transition-colors`} onClick={() => setSelectedToken('SOLANA')}><span className="text-green-400 text-lg">◉</span><span className="text-white">SOL</span></button>
+                  <div className="border-t border-gray-700 mt-2 pt-2"></div>
+                  <div className="flex flex-col gap-2">
+                    <WalletMultiButton className="mobile-wallet-btn" />
+                    <button className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded transition-colors" onClick={() => {/* leaderboard logic */}}><img src="/game/UI/charticon.svg" alt="Leaderboard" className="w-5 h-5 opacity-100" style={{filter: 'brightness(0) invert(1)'}} /><span className="text-white text-sm">Leaderboard</span></button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div
               className="game-board"
               style={{
