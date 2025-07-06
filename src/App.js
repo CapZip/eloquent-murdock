@@ -123,18 +123,30 @@ function makeBoard() {
         } else {
           deco = null; // No trees or bushes in center lane
         }
-        grassDecal = GRASS_VARIANTS[Math.floor(Math.random() * GRASS_VARIANTS.length)];
-        const size = 24 + Math.floor(Math.random() * 8); // 24-32px
-        grassDecalStyle = {
-          position: "absolute",
-          left: `${30 + Math.random() * 40}%`,
-          top: `${30 + Math.random() * 40}%`,
-          width: size,
-          height: size,
-          transform: "translate(-50%, -50%)", // NO rotation
-          opacity: 0.85,
-          zIndex: 0
-        };
+        // Only spawn a grass decal in ~85% of grass tiles
+        if (Math.random() < 0.85) {
+          grassDecal = GRASS_VARIANTS[Math.floor(Math.random() * GRASS_VARIANTS.length)];
+          const size = 16 + Math.floor(Math.random() * 9); // 16-24px
+          const left = `${10 + Math.random() * 80}%`;
+          const top = `${10 + Math.random() * 80}%`;
+          const rotate = `rotate(${Math.floor(Math.random() * 21) - 10}deg)`; // -10 to 10 deg
+          const opacity = 0.7 + Math.random() * 0.3; // 0.7-1.0
+          grassDecalStyle = {
+            position: "absolute",
+            left,
+            top,
+            width: size,
+            height: size,
+            transform: `translate(-50%, -50%) ${rotate}`,
+            opacity,
+            zIndex: 0
+          };
+        }
+      }
+      // No grass decals on pavement or road
+      if (type === "pavement" || type === "road") {
+        grassDecal = null;
+        grassDecalStyle = null;
       }
       const hasCoin = l === CENTER_LANE && (type === "road" || type === "grass") && c >= 4 && c < FINAL_COL;
       row.push({ type, deco, hasCoin, hasCar: false, grassDecal, grassDecalStyle });
@@ -280,46 +292,46 @@ export default function App() {
   }, [gameOver, win, isDying]);
 
   // Animate eagles moving left to right across entire board
-useEffect(() => {
-  if (gameOver || win) return;
-  const interval = setInterval(() => {
-    setEaglePositions((oldEagles) => {
-      const newEagles = oldEagles.map((eagle) => {
-        const newX = eagle.x + 0.28; // Move right, slower
-        // Check if eagle is hitting the chicken (player's column)
-        if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
-          // Eagle is hitting chicken - trigger death animation
-          setIsDying(true);
-          animating.current = true;
-          
-          // Start death animation with requestAnimationFrame
-          let deathStartTime = null;
-          let deathAnimationId = null;
-          
-          const animateDeath = (timestamp) => {
-            if (!deathStartTime) deathStartTime = timestamp;
-            const elapsed = timestamp - deathStartTime;
-            const frameTime = 60; // 60ms per frame for smoother death
+  useEffect(() => {
+    if (gameOver || win) return;
+    const interval = setInterval(() => {
+      setEaglePositions((oldEagles) => {
+        const newEagles = oldEagles.map((eagle) => {
+          const newX = eagle.x + 0.38; // Move right, slightly faster
+          // Check if eagle is hitting the chicken (player's column)
+          if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
+            // Eagle is hitting chicken - trigger death animation
+            setIsDying(true);
+            animating.current = true;
             
-            const currentFrame = Math.floor(elapsed / frameTime);
-            chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
+            // Start death animation with requestAnimationFrame
+            let deathStartTime = null;
+            let deathAnimationId = null;
             
-            if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
-              deathAnimationId = requestAnimationFrame(animateDeath);
-            } else {
-              chickenAnimRef.current.frame = 31; // Stay on last death frame
-              setGameOver(true);
-              animating.current = false; // Reset animating flag
-            }
-          };
-          deathAnimationId = requestAnimationFrame(animateDeath);
-        }
-        return { ...eagle, x: newX };
+            const animateDeath = (timestamp) => {
+              if (!deathStartTime) deathStartTime = timestamp;
+              const elapsed = timestamp - deathStartTime;
+              const frameTime = 60; // 60ms per frame for smoother death
+              
+              const currentFrame = Math.floor(elapsed / frameTime);
+              chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
+              
+              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
+                deathAnimationId = requestAnimationFrame(animateDeath);
+              } else {
+                chickenAnimRef.current.frame = 31; // Stay on last death frame
+                setGameOver(true);
+                animating.current = false; // Reset animating flag
+              }
+            };
+            deathAnimationId = requestAnimationFrame(animateDeath);
+          }
+          return { ...eagle, x: newX };
+        });
+        return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6); // Fly past the end pavement
       });
-      return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6); // Fly past the end pavement
-    });
-  }, 30);
-  return () => clearInterval(interval);
+    }, 30);
+    return () => clearInterval(interval);
   }, [gameOver, win, isDying, player.col]);
 
   // Background car spawning and animation system
@@ -959,8 +971,8 @@ useEffect(() => {
               left: 0,
               top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
               transform: "translateY(-50%)",
-              width: 150,
-              height: 100,
+              width: 200, // Bigger
+              height: 140, // Bigger
               zIndex: isDying ? 200 : 25, // above chicken when dying
               imageRendering: "pixelated",
               pointerEvents: "none"
