@@ -195,6 +195,13 @@ export default function App() {
   const spaceHeld = useRef(false);
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   const [selectorFrame, setSelectorFrame] = useState(0);
+  const [selectedToken, setSelectedToken] = useState("BONK");
+  const tokenOptions = [
+    { label: "BONK", value: "BONK", icon: "🐕" },
+    { label: "WIF", value: "WIF", icon: "🧢" },
+    { label: "POPCAT", value: "POPCAT", icon: "🐱" },
+    { label: "SOLANA", value: "SOLANA", icon: <img src="/solana-logo.png" alt="Solana" style={{ width: 18, height: 18, verticalAlign: 'middle' }} /> }
+  ];
   
   // Preload all images on mount
   useEffect(() => {
@@ -608,16 +615,22 @@ export default function App() {
         <div className="game-header-title">UNCROSSABLE</div>
         <div className="game-header-right">
           {/* Options Selector */}
-          <select className="game-header-selector">
-            <option>Option 1</option>
-            <option>Option 2</option>
-            <option>Option 3</option>
-            <option>Option 4</option>
+          <select
+            className="game-header-selector"
+            value={selectedToken}
+            onChange={e => setSelectedToken(e.target.value)}
+          >
+            {tokenOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
+            ))}
           </select>
           {/* Coin Display */}
           <div className="game-header-coins">
             <span>100</span>
-            <span role="img" aria-label="dog">🐕</span>
+            {selectedToken === "SOLANA"
+              ? <img src="/solana-logo.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+              : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
+            }
           </div>
           {/* Wallet Button */}
           <button className="game-header-wallet">
