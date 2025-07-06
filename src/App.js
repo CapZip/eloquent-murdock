@@ -23,6 +23,7 @@ const GRASS_VARIANTS = [
   process.env.PUBLIC_URL + "/game/Grass/04.png",
   process.env.PUBLIC_URL + "/game/Grass/05.png"
 ];
+const COIN_FRAME = process.env.PUBLIC_URL + "/game/Coin Frame.png";
 
 const COLORS = {
   grass: "#429d4b",
@@ -158,6 +159,7 @@ export default function App() {
   const [isDying, setIsDying] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [roadBlocks, setRoadBlocks] = useState([]); // Array of {col, lane} positions
+  const [claimedCoins, setClaimedCoins] = useState([]); // Array of claimed coin columns
   // Prevent holding spacebar
   const spaceHeld = useRef(false);
   
@@ -421,6 +423,8 @@ useEffect(() => {
         };
         return newBoard;
       });
+      // Track claimed coin column (center lane only)
+      setClaimedCoins((prev) => [...prev, player.col]);
     }
     
     // Win (very rare with high hash)
@@ -631,6 +635,33 @@ useEffect(() => {
                         fontSize: 20,
                         textShadow: "1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000"
                       }}>+{(0.33 * c).toFixed(2)}x</span>
+                    </motion.div>
+                  )}
+                  {/* Claimed coin marker (gold coin) for previously claimed coins */}
+                  {l === CENTER_LANE && claimedCoins.includes(c) && c < player.col && (
+                    <motion.div
+                      animate={{
+                        y: [0, -18, 0],
+                        transition: { duration: 1.2, repeat: Infinity, repeatType: "loop", ease: "easeInOut" }
+                      }}
+                      style={{
+                        position: "absolute",
+                        left: "28%",
+                        top: "34%",
+                        transform: "translate(-50%, -50%)",
+                        width: 56,
+                        height: 56,
+                        zIndex: 3,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                    >
+                      <img
+                        src={COIN_FRAME}
+                        alt="claimed coin"
+                        style={{ width: 56, height: 56, imageRendering: "pixelated", position: "absolute", inset: 0 }}
+                      />
                     </motion.div>
                   )}
                   {/* Car in this lane/column (top to bottom) */}
