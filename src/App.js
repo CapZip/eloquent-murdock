@@ -323,6 +323,9 @@ export default function App() {
               } else {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
+                setStreak(0); // Reset streak on death
+                setCurrentWinnings(8); // Reset winnings on death
+                setCurrentMultiplier(1.0); // Reset multiplier on death
                 animating.current = false; // Reset animating flag
               }
             };
@@ -366,6 +369,9 @@ export default function App() {
               } else {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
+                setStreak(0); // Reset streak on death
+                setCurrentWinnings(8); // Reset winnings on death
+                setCurrentMultiplier(1.0); // Reset multiplier on death
                 animating.current = false; // Reset animating flag
               }
             };
@@ -570,6 +576,18 @@ export default function App() {
       return { ...prev, col: endCol };
     });
     
+    // Update streak and multiplier
+    const newStreak = streak + 1;
+    setStreak(newStreak);
+    
+    // Calculate current multiplier based on difficulty and streak
+    const multiplierIndex = Math.min(newStreak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1);
+    const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
+    setCurrentMultiplier(newMultiplier);
+    
+    // Update current winnings
+    setCurrentWinnings(8 * newMultiplier);
+    
     // Reset camera to center on chicken when moving
     setManualScrollOffset(0); // Reset to automatic camera mode
     setHasManualPosition(false); // Reset manual mode
@@ -637,6 +655,9 @@ export default function App() {
               } else {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
+                setStreak(0); // Reset streak on death
+                setCurrentWinnings(8); // Reset winnings on death
+                setCurrentMultiplier(1.0); // Reset multiplier on death
                 animating.current = false; // Reset animating flag
               }
             };
@@ -718,6 +739,11 @@ export default function App() {
     hard: [1.20, 1.52, 1.94, 2.51, 4.39, 8.24, 11.68, 25.48, 39.63, 64.40, 110.40],
     daredevil: [1.60, 2.74, 4.85, 8.90, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87]
   };
+
+  // Streak and winnings tracking
+  const [streak, setStreak] = useState(0);
+  const [currentWinnings, setCurrentWinnings] = useState(8);
+  const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
 
   // Difficulty button handlers
   const handleDifficultyChange = (newDifficulty) => {
@@ -1187,6 +1213,62 @@ export default function App() {
               </motion.div>
             </div>
             {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
+            
+            {/* Streak and Multiplier Tracker (Desktop) */}
+            <div className="streak-multiplier-tracker">
+              <div className="streak-multiplier-box">
+                <div className="streak-multiplier-header">
+                  <img 
+                    src="/game/Chicken Walk V2/Chicken Walk V2 000.png" 
+                    alt="Player" 
+                    className="streak-multiplier-chicken"
+                  />
+                  <div className="streak-multiplier-values">
+                    <div className="streak-multiplier-mult">
+                      {currentMultiplier.toFixed(1)}x
+                    </div>
+                    <div className="streak-multiplier-bet">
+                      Bet: $8
+                    </div>
+                  </div>
+                </div>
+                <div className="streak-multiplier-winnings">
+                  <div className="streak-multiplier-winnings-label">Current Winnings</div>
+                  <div className="streak-multiplier-winnings-value">${currentWinnings}</div>
+                </div>
+                <div className="streak-multiplier-streak-row">
+                  <span className="streak-multiplier-streak-count">{streak}</span>
+                  <img 
+                    src="/game/Custom Icons/Fire.png" 
+                    alt="Streak" 
+                    className="streak-multiplier-fire"
+                  />
+                  <span className="streak-multiplier-streak-label">streak</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Streak and Multiplier Tracker (Mobile) */}
+            <div className="streak-multiplier-tracker-mobile">
+              <img 
+                src="/game/Chicken Walk V2/Chicken Walk V2 000.png" 
+                alt="Player" 
+                className="streak-multiplier-chicken-mobile"
+              />
+              <div className="streak-multiplier-values-mobile">
+                <div className="streak-multiplier-mult-mobile">{currentMultiplier.toFixed(1)}x</div>
+                <div className="streak-multiplier-winnings-mobile">${currentWinnings}</div>
+                <div className="streak-multiplier-streak-row-mobile">
+                  <span className="streak-multiplier-streak-count-mobile">{streak}</span>
+                  <img 
+                    src="/game/Custom Icons/Fire.png" 
+                    alt="Streak" 
+                    className="streak-multiplier-fire-mobile"
+                  />
+                  <span className="streak-multiplier-streak-label-mobile">streak</span>
+                </div>
+              </div>
+            </div>
       
             
             {/* Game Footer Controls */}
