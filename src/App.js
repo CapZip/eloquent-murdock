@@ -116,6 +116,8 @@ function makeBoard() {
         if (l !== CENTER_LANE) {
           if (Math.random() < 0.3) deco = { type: "bush", img: BUSH, top: Math.random() * 40 + 30, left: Math.random() * 30 + 10 };
           else if (Math.random() < 0.15) deco = { type: "tree", img: Math.random() < 0.5 ? TREE : TREE2, top: Math.random() * 40 + 10, left: Math.random() * 30 + 5 };
+        } else {
+          deco = null; // No trees or bushes in center lane
         }
         grassDecal = GRASS_VARIANTS[Math.floor(Math.random() * GRASS_VARIANTS.length)];
         const size = 24 + Math.floor(Math.random() * 8); // 24-32px
@@ -463,6 +465,17 @@ useEffect(() => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Collect all tree/bush decorations for the board
+  const allDecos = [];
+  for (let l = 0; l < board.length; l++) {
+    for (let c = 0; c < board[l].length; c++) {
+      const deco = board[l][c].deco;
+      if (deco) {
+        allDecos.push({ ...deco, lane: l, col: c });
+      }
+    }
+  }
+
   // Render
   if (!imagesLoaded) {
     return (
@@ -516,6 +529,7 @@ useEffect(() => {
           animate={{ left: scrollOffset }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
         >
+          {/* Board grid columns/tiles */}
           {Array.from({ length: board[0].length }).map((_, c) => (
             <div
               key={`col-${c}`}
@@ -727,6 +741,24 @@ useEffect(() => {
                 </div>
               ))}
             </div>
+          ))}
+          {/* Render all trees and bushes globally for correct z-index and overflow, INSIDE the board container */}
+          {allDecos.map((deco, i) => (
+            <img
+              key={`deco-${i}`}
+              src={deco.img}
+              alt={deco.type}
+              style={{
+                position: "absolute",
+                left: deco.col * COL_WIDTH + deco.left,
+                top: deco.lane * (800 / LANES) + deco.top,
+                width: deco.type === "tree" ? 120 : 95,
+                height: deco.type === "tree" ? 150 : 84,
+                zIndex: 10 + deco.lane,
+                imageRendering: "pixelated",
+                pointerEvents: "none"
+              }}
+            />
           ))}
         </motion.div>
         {/* Chicken absolutely positioned inside board container */}
