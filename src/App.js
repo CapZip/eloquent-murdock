@@ -1177,6 +1177,7 @@ export default function App() {
                 <div className="game-footer-flex">
                   {/* Mobile Controls */}
                   <div className="game-footer-mobile">
+                  <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row">
@@ -1195,7 +1196,6 @@ export default function App() {
                         <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
                       </div>
                     </div>
-                    <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
                   </div>
                   {/* Desktop Controls */}
                   <div className="game-footer-desktop">
