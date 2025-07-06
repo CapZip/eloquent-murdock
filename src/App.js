@@ -10,7 +10,11 @@ const CENTER_LANE = Math.floor(LANES / 2);
 const PAVEMENT_START_COL = 4;
 
 const CHICKEN = process.env.PUBLIC_URL + "/game/Chicken Walk V2/Chicken Walk V2 000.png";
-const CAR = process.env.PUBLIC_URL + "/game/Car Yellow V2 000.png";
+const CAR_YELLOW = process.env.PUBLIC_URL + "/game/Car Yellow V2 000.png";
+const CAR_RED = process.env.PUBLIC_URL + "/game/Car Red V2 000.png";
+const CAR_GREEN = process.env.PUBLIC_URL + "/game/Car Green V2 000.png";
+const CAR_BLUE = process.env.PUBLIC_URL + "/game/Car Blue V2 000.png";
+const CARS = [CAR_YELLOW, CAR_RED, CAR_GREEN, CAR_BLUE];
 const COIN = process.env.PUBLIC_URL + "/game/coins/multiplierCoin.png";
 const TREE = process.env.PUBLIC_URL + "/game/Trees/Tree.png";
 const TREE2 = process.env.PUBLIC_URL + "/game/Trees/Tree2.png";
@@ -71,7 +75,7 @@ const preloadImages = (onComplete) => {
     ...CHICKEN_FRAMES,
     ...CHICKEN_DEAD_FRAMES,
     ...EAGLE_FRAMES,
-    CAR,
+    ...CARS,
     COIN,
     TREE,
     TREE2,
@@ -150,6 +154,12 @@ function getVisibleCols() {
   return window.innerWidth <= 768 ? 3 : 9;
 }
 
+// Add selector frame constants
+const SELECTOR_FRAMES = [
+  process.env.PUBLIC_URL + "/game/Selector.png",
+  process.env.PUBLIC_URL + "/game/Slector 01.png"
+];
+
 export default function App() {
   const [board, setBoard] = useState(makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
@@ -172,6 +182,7 @@ export default function App() {
   // Prevent holding spacebar
   const spaceHeld = useRef(false);
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
+  const [selectorFrame, setSelectorFrame] = useState(0);
   
   // Preload all images on mount
   useEffect(() => {
@@ -319,7 +330,8 @@ useEffect(() => {
           lane: randomLane,
           col: randomCol,
           y: -1.1, // Start above the board
-          speed: 0.35 // Same speed as death cars
+          speed: 0.35, // Same speed as death cars
+          carType: Math.floor(Math.random() * CARS.length) // Random car color
         }]);
       }
     }, 1000); // Check for spawning every 1 second
@@ -431,7 +443,8 @@ useEffect(() => {
             setCarPositions(prev => [...prev, { 
               lane: 0, // Topmost lane
               col: endCol,
-              y: -1.1 // Start fully off-screen above the board
+              y: -1.1, // Start fully off-screen above the board
+              carType: Math.floor(Math.random() * CARS.length) // Random car color
             }]);
           } else if (board[CENTER_LANE][endCol].type === "grass") {
             // Eagle for grass deaths - flies across entire board
@@ -522,6 +535,14 @@ useEffect(() => {
       }
     }
   }
+
+  // Selector frame pulsing effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSelectorFrame(f => (f + 1) % 2);
+    }, 500); // Slower pulse
+    return () => clearInterval(interval);
+  }, []);
 
   // Render
   if (!imagesLoaded) {
@@ -680,7 +701,7 @@ useEffect(() => {
                   {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
                     <motion.img
                       key={`car-${l}-${c}-${i}`}
-                      src={CAR}
+                      src={CARS[car.carType || 0]}
                       alt="car"
                       initial={{ scale: 1, opacity: 0, y: 0 }}
                       animate={{
@@ -803,13 +824,30 @@ useEffect(() => {
                   />
                 </div>
               )}
+              {/* Selector frame around the next claimable coin */}
+              {tile.hasCoin && c === player.col + 1 && (
+                <img
+                  src={SELECTOR_FRAMES[selectorFrame]}
+                  alt="selector"
+                  style={{
+                    position: "absolute",
+                    left: c * COL_WIDTH + COL_WIDTH * 0.5,
+                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                    transform: "translate(-50%, -50%)",
+                    width: selectorFrame === 1 ? 125 : 105,
+                    height: selectorFrame === 1 ? 125 : 105,
+                    zIndex: 51, // Above coin
+                    pointerEvents: "none"
+                  }}
+                />
+              )}
             </React.Fragment>
           ))}
           {/* Render background cars globally for correct camera movement */}
           {backgroundCars.map((car, i) => (
             <img
               key={`bg-car-${i}`}
-              src={CAR}
+              src={CARS[car.carType]}
               alt="background car"
               style={{
                 position: "absolute",
@@ -847,7 +885,7 @@ useEffect(() => {
         {carPositions.map((car, i) => (
           <img
             key={`car-${i}`}
-            src={CAR}
+            src={CARS[car.carType || 0]}
             alt="car"
             style={{
               position: "absolute",
