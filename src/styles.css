@@ -106,7 +106,9 @@ button:disabled {
   flex-direction: column;
   width: 100%;
   background: #000;
+  max-width: 1240px;
   padding: 0;
+  margin: 0 auto;
 }
 .game-header-row {
   width: 100%;
@@ -220,6 +222,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin: 0 auto;
+  max-width: 1240px;
 }
 .game-footer-mobile {
   display: flex;
