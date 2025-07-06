@@ -485,7 +485,17 @@ export default function App() {
     setIsDragging(true);
     setDragStart({ x, y: 0 });
     setDragOffset({ x: 0, y: 0 });
-    setInitialScrollOffset(manualScrollOffset);
+    
+    // If not already in manual mode, center camera on chicken when starting drag
+    if (!hasManualPosition) {
+      const centerOffset = -player.col * COL_WIDTH + (visibleCols * COL_WIDTH) / 2;
+      setManualScrollOffset(centerOffset);
+      setInitialScrollOffset(centerOffset);
+      setHasManualPosition(true); // Mark that user is now in manual mode
+    } else {
+      setInitialScrollOffset(manualScrollOffset);
+    }
+    
     lastDragTime.current = Date.now();
     
     // Set pointer capture for consistent behavior
@@ -556,6 +566,10 @@ export default function App() {
       if (prev.col === FINAL_COL) return prev;
       return { ...prev, col: endCol };
     });
+    
+    // Reset camera to center on chicken when moving
+    setManualScrollOffset(0); // Reset to automatic camera mode
+    setHasManualPosition(false); // Reset manual mode
     
     // Start walking animation
     chickenAnimRef.current.col = endCol;
@@ -1107,61 +1121,55 @@ export default function App() {
                   }}
                   className="chicken-sprite"
                 />
+                {/* Cars absolutely positioned inside board container */}
+                {carPositions.map((car, i) => (
+                  <img
+                    key={`car-${i}`}
+                    src={CARS[car.carType || 0]}
+                    alt="car"
+                    style={{
+                      position: "absolute",
+                      left: car.col * COL_WIDTH,
+                      top: car.y * (800 / LANES),
+                      width: COL_WIDTH,
+                      height: (800 / LANES),
+                      zIndex: isDying ? 200 : 50, // above chicken when dying
+                      imageRendering: "pixelated",
+                      pointerEvents: "none"
+                    }}
+                  />
+                ))}
+                {/* Eagles absolutely positioned inside board container */}
+                {eaglePositions.map((eagle, i) => (
+                  <motion.img
+                    key={`eagle-${i}`}
+                    src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
+                    alt="eagle"
+                    initial={{ scale: 1, opacity: 0, x: 0 }}
+                    animate={{
+                      x: eagle.x * COL_WIDTH,
+                      scale: 1,
+                      opacity: 1,
+                      transition: { duration: 0.3, ease: "easeOut" }
+                    }}
+                    exit={{ scale: 1, opacity: 0 }}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
+                      transform: "translateY(-50%)",
+                      width: 200, // Bigger
+                      height: 140, // Bigger
+                      zIndex: isDying ? 200 : 25, // above chicken when dying
+                      imageRendering: "pixelated",
+                      pointerEvents: "none"
+                    }}
+                  />
+                ))}
               </motion.div>
-              {/* Cars absolutely positioned inside board container */}
-              {carPositions.map((car, i) => (
-                <img
-                  key={`car-${i}`}
-                  src={CARS[car.carType || 0]}
-                  alt="car"
-                  style={{
-                    position: "absolute",
-                    left: hasManualPosition 
-                      ? car.col * COL_WIDTH
-                      : (car.col - firstVisibleCol) * COL_WIDTH,
-                    top: car.y * (800 / LANES),
-                    width: COL_WIDTH,
-                    height: (800 / LANES),
-                    zIndex: isDying ? 200 : 50, // above chicken when dying
-                    imageRendering: "pixelated",
-                    pointerEvents: "none"
-                  }}
-                />
-              ))}
-
-
-              {/* Eagles absolutely positioned inside board container */}
-              {eaglePositions.map((eagle, i) => (
-                <motion.img
-                  key={`eagle-${i}`}
-                  src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
-                  alt="eagle"
-                  initial={{ scale: 1, opacity: 0, x: 0 }}
-                  animate={{
-                    x: hasManualPosition 
-                      ? eagle.x * COL_WIDTH
-                      : (eagle.x - firstVisibleCol) * COL_WIDTH,
-                    scale: 1,
-                    opacity: 1,
-                    transition: { duration: 0.3, ease: "easeOut" }
-                  }}
-                  exit={{ scale: 1, opacity: 0 }}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: eagle.lane * (800 / LANES) + (800 / LANES) / 2 - 60,
-                    transform: "translateY(-50%)",
-                    width: 200, // Bigger
-                    height: 140, // Bigger
-                    zIndex: isDying ? 200 : 25, // above chicken when dying
-                    imageRendering: "pixelated",
-                    pointerEvents: "none"
-                  }}
-                />
-              ))}
             </div>
             {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
-            {win && <div style={{ fontSize: 32, color: "lime" }}>You Win!</div>}
+      
             
             {/* Game Footer Controls */}
             <div className="game-footer-bar">
