@@ -421,3 +421,27 @@ button:disabled {
 .wallet-adapter-dropdown-list-item:hover {
   background: #343a40 !important;
 }
+
+.next-claimable-coin:hover, .next-claimable-coin:active {
+  filter: brightness(1.15);
+  z-index: 100 !important;
+  border-radius: 50%;
+  transition: box-shadow 0.15s, filter 0.15s;
+}
+
+.next-claimable-coin .coin-hover-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.15s;
+}
+.next-claimable-coin:hover .coin-hover-overlay,
+.next-claimable-coin:active .coin-hover-overlay {
+  opacity: 1;
+}

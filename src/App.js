@@ -667,11 +667,6 @@ export default function App() {
                 boxShadow: "0 8px 32px #000a",
                 boxSizing: "border-box"
               }}
-              onClick={() => {
-                if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
-                  moveChicken();
-                }
-              }}
             >
               {/* Board grid */}
               <motion.div
@@ -873,9 +868,24 @@ export default function App() {
                           zIndex: 50,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center"
+                          justifyContent: "center",
+                          cursor: c === player.col + 1 ? "pointer" : "default"
                         }}
+                        onClick={() => {
+                          if (c === player.col + 1 && !animating.current && !gameOver && !win && !cashedOut && !isDying) {
+                            moveChicken();
+                          }
+                        }}
+                        onTouchStart={e => {
+                          if (c !== player.col + 1) return;
+                          if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
+                            moveChicken();
+                          }
+                        }}
+                        className={c === player.col + 1 ? "next-claimable-coin" : undefined}
                       >
+                        {/* Overlay highlight for hover/active */}
+                        {c === player.col + 1 && <div className="coin-hover-overlay" />}
                         <img
                           src={COIN}
                           alt="coin"
