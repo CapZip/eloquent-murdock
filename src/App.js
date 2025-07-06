@@ -705,15 +705,16 @@ useEffect(() => {
                         transition: { duration: 0.3, ease: "easeOut" }
                       }}
                       exit={{ scale: 1, opacity: 0 }}
-                                              style={{
-                          position: "absolute",
-                          left: 0,
-                          top: 0,
-                          width: COL_WIDTH, // Full lane width
-                          height: (800 / LANES), // Full lane height
-                          zIndex: 50, // Much much higher than chicken (zIndex: 10)
-                          imageRendering: "pixelated"
-                        }}
+                      style={{
+                        position: "absolute",
+                        left: (car.col - firstVisibleCol) * COL_WIDTH,
+                        top: car.lane * (800 / LANES),
+                        width: COL_WIDTH,
+                        height: (800 / LANES),
+                        zIndex: isDying ? 200 : 50, // above chicken when dying
+                        imageRendering: "pixelated",
+                        pointerEvents: "none"
+                      }}
                     />
                   ))}
                   
@@ -775,7 +776,6 @@ useEffect(() => {
             zIndex: 100, // always above trees above him
             imageRendering: "pixelated",
             pointerEvents: "none",
-            filter: (isDying || gameOver) ? "grayscale(1)" : "none",
             transition: "left 0.3s ease-out"
           }}
           className="chicken-sprite"
@@ -800,7 +800,7 @@ useEffect(() => {
               top: car.lane * (800 / LANES),
               width: COL_WIDTH,
               height: (800 / LANES),
-              zIndex: 50,
+              zIndex: isDying ? 200 : 50, // above chicken when dying
               imageRendering: "pixelated",
               pointerEvents: "none"
             }}
@@ -827,7 +827,7 @@ useEffect(() => {
               transform: "translateY(-50%)",
               width: 150,
               height: 100,
-              zIndex: 25,
+              zIndex: isDying ? 200 : 25, // above chicken when dying
               imageRendering: "pixelated",
               pointerEvents: "none"
             }}
