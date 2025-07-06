@@ -614,19 +614,28 @@ export default function App() {
         
         console.log(`Hash: ${hash}, Col: ${endCol}, Danger: ${(finalDanger * 100).toFixed(2)}%`);
         
-                if (Math.random() < finalDanger) {
+        if (Math.random() < finalDanger) {
           // Player is doomed - prevent any further movement
           animating.current = true; // Lock movement
           
           // Spawn appropriate death animation based on terrain
           if (board[CENTER_LANE][endCol].type === "road") {
             // Car for road deaths
-            setCarPositions(prev => [...prev, { 
-              lane: 0, // Topmost lane
-              col: endCol,
-              y: -1.1, // Start fully off-screen above the board
-              carType: Math.floor(Math.random() * CARS.length) // Random car color
-            }]);
+            if (window.innerWidth <= 768) {
+              setCarPositions([{ 
+                lane: 0, // Topmost lane
+                col: endCol,
+                y: -1.1, // Start fully off-screen above the board
+                carType: Math.floor(Math.random() * CARS.length) // Random car color
+              }]);
+            } else {
+              setCarPositions(prev => [...prev, { 
+                lane: 0, // Topmost lane
+                col: endCol,
+                y: -1.1, // Start fully off-screen above the board
+                carType: Math.floor(Math.random() * CARS.length) // Random car color
+              }]);
+            }
           } else if (board[CENTER_LANE][endCol].type === "grass") {
             // Eagle for grass deaths - flies across entire board
             setEaglePositions(prev => [...prev, {

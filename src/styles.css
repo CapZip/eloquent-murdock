@@ -469,16 +469,17 @@ button:disabled {
 
 /* Mobile menu overlay */
 .mobile-menu-overlay {
-  position: absolute;
-  top: 48px;
+  position: fixed;
+  top: 48px;      /* Leave space for header/hamburger */
   right: 0;
-  left: auto;
-  bottom: auto;
-  z-index: 50;
-  background: none;
-  width: auto;
-  height: auto;
-  pointer-events: auto;
+  left: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  transition: background 0.2s;
 }
 .mobile-menu-content {
   background: #111827;
