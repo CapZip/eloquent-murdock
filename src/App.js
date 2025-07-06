@@ -198,12 +198,25 @@ export default function App() {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [roadBlocks, setRoadBlocks] = useState([]); // Array of {col, lane} positions
   const [claimedCoins, setClaimedCoins] = useState([]); // Array of claimed coin columns
-  const [backgroundCars, setBackgroundCars] = useState([]); // Array of { lane, col, y } for background traffic
-  // Prevent holding spacebar
-  const spaceHeld = useRef(false);
+  const [backgroundCars, setBackgroundCars] = useState([]); // Array of {lane, col, y, speed, carType}
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   const [selectorFrame, setSelectorFrame] = useState(0);
-  const [selectedToken, setSelectedToken] = useState("BONK");
+  const [selectedToken, setSelectedToken] = useState("SOLANA");
+  
+  // Drag state variables
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [manualScrollOffset, setManualScrollOffset] = useState(0);
+  const [manualCameraYOffset, setManualCameraYOffset] = useState(0);
+  const [initialScrollOffset, setInitialScrollOffset] = useState(0);
+  const [hasManualPosition, setHasManualPosition] = useState(false);
+  const dragRef = useRef(null);
+  const lastDragTime = useRef(0);
+  
+  // Prevent holding spacebar
+  const spaceHeld = useRef(false);
+  
   const tokenOptions = [
     { label: "BONK", value: "BONK", icon: "🐕" },
     { label: "WIF", value: "WIF", icon: "🧢" },
@@ -233,37 +246,51 @@ export default function App() {
   // Calculate first visible column for centering
   let firstVisibleCol;
   const halfVisible = Math.floor(visibleCols / 2);
-  if (window.innerWidth <= 768) {
-    const progress = player.col - PAVEMENT_START_COL;
-    if (player.col === PAVEMENT_START_COL) {
-      firstVisibleCol = player.col; // Chicken on the left
-    } else if (progress % 2 === 0) {
-      firstVisibleCol = player.col - 1; // Chicken centered
-    } else {
-      firstVisibleCol = player.col; // Chicken on the left, camera jumps
-    }
-    if (firstVisibleCol > board[0].length - visibleCols) {
-      firstVisibleCol = board[0].length - visibleCols; // Clamp to end
-    }
+  
+  // Use manual drag offset if dragging, otherwise use automatic camera
+  let finalScrollOffset;
+  let finalCameraYOffset;
+  
+  if (isDragging || hasManualPosition) {
+    // Use manual drag offsets directly without any interference
+    finalScrollOffset = manualScrollOffset;
+    finalCameraYOffset = manualCameraYOffset;
+    // Calculate firstVisibleCol from manual offset for positioning calculations
+    firstVisibleCol = Math.round(-manualScrollOffset / COL_WIDTH);
   } else {
-    firstVisibleCol = Math.max(0, player.col - halfVisible);
-  }
-  const scrollOffset = -firstVisibleCol * COL_WIDTH;
-
-  // Calculate vertical camera offset for mobile
-  let cameraYOffset = 0;
-  if (window.innerWidth <= 768) {
-    const boardHeight = 800;
-    const laneHeight = boardHeight / LANES;
-    const boardPixelHeight = boardHeight;
-    const containerHeight = boardHeight; // .game-board height
-    const chickenY = CENTER_LANE * laneHeight + laneHeight / 2;
-    const centerY = containerHeight / 2;
-    let desiredOffset = centerY - chickenY;
-    // Clamp so we don't scroll past the top or bottom
-    const maxOffset = 0;
-    const minOffset = containerHeight - boardPixelHeight;
-    cameraYOffset = Math.max(Math.min(desiredOffset, maxOffset), minOffset);
+    // Use automatic camera logic
+    if (window.innerWidth <= 768) {
+      const progress = player.col - PAVEMENT_START_COL;
+      if (player.col === PAVEMENT_START_COL) {
+        firstVisibleCol = player.col; // Chicken on the left
+      } else if (progress % 2 === 0) {
+        firstVisibleCol = player.col - 1; // Chicken centered
+      } else {
+        firstVisibleCol = player.col; // Chicken on the left, camera jumps
+      }
+      if (firstVisibleCol > board[0].length - visibleCols) {
+        firstVisibleCol = board[0].length - visibleCols; // Clamp to end
+      }
+    } else {
+      firstVisibleCol = Math.max(0, player.col - halfVisible);
+    }
+    finalScrollOffset = -firstVisibleCol * COL_WIDTH;
+    
+    // Calculate vertical camera offset for mobile
+    finalCameraYOffset = 0;
+    if (window.innerWidth <= 768) {
+      const boardHeight = 800;
+      const laneHeight = boardHeight / LANES;
+      const boardPixelHeight = boardHeight;
+      const containerHeight = boardHeight; // .game-board height
+      const chickenY = CENTER_LANE * laneHeight + laneHeight / 2;
+      const centerY = containerHeight / 2;
+      let desiredOffset = centerY - chickenY;
+      // Clamp so we don't scroll past the top or bottom
+      const maxOffset = 0;
+      const minOffset = containerHeight - boardPixelHeight;
+      finalCameraYOffset = Math.max(Math.min(desiredOffset, maxOffset), minOffset);
+    }
   }
 
   // Animate cars moving top to bottom
@@ -440,6 +467,81 @@ export default function App() {
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [player, animating, gameOver, win, cashedOut]);
+
+  // Drag event handlers for draggable game board
+  const handlePointerDown = (e) => {
+    // Don't start drag if clicking on a coin or UI element
+    if (e.target.closest('.next-claimable-coin') || 
+        e.target.closest('.game-header') || 
+        e.target.closest('.game-footer-bar') ||
+        e.target.closest('.mobile-menu-overlay')) {
+      return;
+    }
+    
+    e.preventDefault();
+    const rect = dragRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    setIsDragging(true);
+    setDragStart({ x, y: 0 });
+    setDragOffset({ x: 0, y: 0 });
+    setInitialScrollOffset(manualScrollOffset);
+    lastDragTime.current = Date.now();
+    
+    // Set pointer capture for consistent behavior
+    dragRef.current.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const rect = dragRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    // Calculate the difference from the start position
+    const deltaX = x - dragStart.x;
+    
+    // Only start dragging after a minimum distance to prevent accidental drags
+    const minDragDistance = 3;
+    if (Math.abs(deltaX) < minDragDistance) {
+      return;
+    }
+    
+    // Apply drag sensitivity to make it slower
+    const dragSensitivity = 0.6;
+    const adjustedDeltaX = deltaX * dragSensitivity;
+    
+    // Calculate new scroll offset by adding the delta to the initial scroll offset
+    const newScrollOffset = initialScrollOffset + adjustedDeltaX;
+    const maxScrollOffset = 0; // Can't scroll past the start
+    const minScrollOffset = -(board[0].length - visibleCols) * COL_WIDTH; // Can't scroll past the end
+    
+    const clampedScrollOffset = Math.max(minScrollOffset, Math.min(maxScrollOffset, newScrollOffset));
+    
+    // Only update if the value actually changed to prevent unnecessary re-renders
+    if (Math.abs(clampedScrollOffset - manualScrollOffset) > 0.1) {
+      setManualScrollOffset(clampedScrollOffset);
+    }
+    setDragOffset({ x: deltaX, y: 0 });
+    lastDragTime.current = Date.now();
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    setIsDragging(false);
+    setDragStart({ x: 0, y: 0 });
+    setDragOffset({ x: 0, y: 0 });
+    setInitialScrollOffset(0);
+    setHasManualPosition(true); // Mark that user has manually positioned the camera
+    
+    // Release pointer capture
+    if (dragRef.current) {
+      dragRef.current.releasePointerCapture(e.pointerId);
+    }
+  };
 
   // Animate chicken movement
   const moveChicken = () => {
@@ -671,6 +773,7 @@ export default function App() {
               </div>
             )}
             <div
+              ref={dragRef}
               className="game-board"
               style={{
                 position: "relative",
@@ -678,26 +781,33 @@ export default function App() {
                 height: 800,
                 margin: "24px auto",
                 marginBottom: "0",
-                marginTop: cameraYOffset,
+                marginTop: finalCameraYOffset,
                 background: COLORS.grass,
                 overflow: "hidden",
                 boxShadow: "0 8px 32px #000a",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                cursor: isDragging ? "grabbing" : "grab",
+                userSelect: "none",
+                touchAction: "none"
               }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
             >
               {/* Board grid */}
               <motion.div
                 style={{
                   position: "absolute",
                   top: 0,
-                  left: scrollOffset,
+                  left: finalScrollOffset,
                   height: "100%",
                   width: board[0].length * COL_WIDTH,
                   display: "flex",
-                  transform: `translateY(${cameraYOffset}px)`
+                  transform: `translateY(${finalCameraYOffset}px)`
                 }}
-                animate={{ left: scrollOffset }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                animate={isDragging ? {} : { left: finalScrollOffset }}
+                transition={isDragging ? {} : { type: "spring", stiffness: 200, damping: 20 }}
               >
                 {/* Board grid columns/tiles */}
                 {Array.from({ length: board[0].length }).map((_, c) => (
@@ -979,25 +1089,25 @@ export default function App() {
                     }}
                   />
                 ))}
+                {/* Chicken absolutely positioned inside board container */}
+                <img
+                  src={isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]}
+                  alt="chicken"
+                  style={{
+                    position: "absolute",
+                    left: chickenAnimRef.current.col * COL_WIDTH + COL_WIDTH * 0.5,
+                    top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
+                    transform: "translate(-50%, -50%)",
+                    width: 100,
+                    height: 100,
+                    zIndex: 150, // Very high z-index to appear above everything
+                    imageRendering: "pixelated",
+                    pointerEvents: "none",
+                    transition: "left 0.3s ease-out"
+                  }}
+                  className="chicken-sprite"
+                />
               </motion.div>
-              {/* Chicken absolutely positioned inside board container */}
-              <img
-                src={isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]}
-                alt="chicken"
-                style={{
-                  position: "absolute",
-                  left: (chickenAnimRef.current.col - firstVisibleCol) * COL_WIDTH + COL_WIDTH * 0.5,
-                  top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
-                  transform: "translate(-50%, -50%)",
-                  width: 100,
-                  height: 100,
-                  zIndex: 100, // always above trees above him
-                  imageRendering: "pixelated",
-                  pointerEvents: "none",
-                  transition: "left 0.3s ease-out"
-                }}
-                className="chicken-sprite"
-              />
               {/* Cars absolutely positioned inside board container */}
               {carPositions.map((car, i) => (
                 <img
@@ -1006,7 +1116,9 @@ export default function App() {
                   alt="car"
                   style={{
                     position: "absolute",
-                    left: (car.col - firstVisibleCol) * COL_WIDTH,
+                    left: hasManualPosition 
+                      ? car.col * COL_WIDTH
+                      : (car.col - firstVisibleCol) * COL_WIDTH,
                     top: car.y * (800 / LANES),
                     width: COL_WIDTH,
                     height: (800 / LANES),
@@ -1026,7 +1138,9 @@ export default function App() {
                   alt="eagle"
                   initial={{ scale: 1, opacity: 0, x: 0 }}
                   animate={{
-                    x: (eagle.x - firstVisibleCol) * COL_WIDTH,
+                    x: hasManualPosition 
+                      ? eagle.x * COL_WIDTH
+                      : (eagle.x - firstVisibleCol) * COL_WIDTH,
                     scale: 1,
                     opacity: 1,
                     transition: { duration: 0.3, ease: "easeOut" }

@@ -19,6 +19,10 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
   margin: 0;
   box-sizing: border-box;
   background: black;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Game board responsive styles */
@@ -85,14 +89,6 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
     justify-content: center !important;
     min-height: 100vh !important;
   }
-}
-
-/* Prevent text selection on mobile */
-.App {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 /* Touch-friendly button styles */
