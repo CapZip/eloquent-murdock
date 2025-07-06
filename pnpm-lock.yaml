@@ -35,6 +35,9 @@ dependencies:
   react-scripts:
     specifier: ^5.0.0
     version: 5.0.1(@babel/plugin-syntax-flow@7.27.1)(@babel/plugin-transform-react-jsx@7.27.1)(eslint@8.57.1)(react@19.1.0)(typescript@5.7.2)
+  terser:
+    specifier: ^5.43.1
+    version: 5.43.1
 
 devDependencies:
   '@types/react':
