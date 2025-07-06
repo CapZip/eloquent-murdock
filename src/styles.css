@@ -36,8 +36,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 @media (max-width: 768px) {
   .chicken-sprite {
     /* Scale chicken down slightly on mobile */
-    width: 80px !important;
-    height: 80px !important;
+    width: 100px !important;
+    height: 100px !important;
   }
   
   .chicken-sprite[src*="Chicken Dead V2"] {
@@ -65,7 +65,7 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
   
   .game-board {
     width: 95vw !important;
-    height: 60vh !important;
+    height: 80vh !important;
     max-width: 1260px !important; /* VISIBLE_COLS * COL_WIDTH */
     margin: 12px auto !important;
     padding-top: 80px;
