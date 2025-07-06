@@ -59,11 +59,16 @@ const CHICKEN_DEAD_FRAMES = Array.from({ length: 32 }, (_, i) =>
   process.env.PUBLIC_URL + `/game/Chicken Dead V2/Chicken Dead V2 ${String(i).padStart(3, '0')}.png`
 );
 
+const EAGLE_FRAMES = Array.from({ length: 30 }, (_, i) =>
+  process.env.PUBLIC_URL + `/game/Eagle Peck V2/Eagle Peck V2 ${String(i).padStart(3, '0')}.png`
+);
+
 // Preload all images on component mount
 const preloadImages = (onComplete) => {
   const allImages = [
     ...CHICKEN_FRAMES,
     ...CHICKEN_DEAD_FRAMES,
+    ...EAGLE_FRAMES,
     CAR,
     COIN,
     TREE,
@@ -147,6 +152,7 @@ export default function App() {
   const [animCol, setAnimCol] = useState(4);
   const animating = useRef(false);
   const [carPositions, setCarPositions] = useState(() => makeCars(board)); // { lane, col, y }
+  const [eaglePositions, setEaglePositions] = useState([]); // { lane, col, x }
   const chickenAnimRef = useRef({ col: 4, frame: 0 });
   const [forceRerender, setForceRerender] = useState(0);
   const [isDying, setIsDying] = useState(false);
@@ -216,6 +222,49 @@ export default function App() {
     }, 30);
     return () => clearInterval(interval);
   }, [gameOver, win, isDying]);
+
+  // Animate eagles moving left to right across entire board
+useEffect(() => {
+  if (gameOver || win) return;
+  const interval = setInterval(() => {
+    setEaglePositions((oldEagles) => {
+      const newEagles = oldEagles.map((eagle) => {
+        const newX = eagle.x + 0.4; // Move right
+        // Check if eagle is hitting the chicken (player's column)
+        if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
+          // Eagle is hitting chicken - trigger death animation
+          setIsDying(true);
+          animating.current = true;
+          
+          // Start death animation with requestAnimationFrame
+          let deathStartTime = null;
+          let deathAnimationId = null;
+          
+          const animateDeath = (timestamp) => {
+            if (!deathStartTime) deathStartTime = timestamp;
+            const elapsed = timestamp - deathStartTime;
+            const frameTime = 60; // 60ms per frame for smoother death
+            
+            const currentFrame = Math.floor(elapsed / frameTime);
+            chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
+            
+            if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
+              deathAnimationId = requestAnimationFrame(animateDeath);
+            } else {
+              chickenAnimRef.current.frame = 31; // Stay on last death frame
+              setGameOver(true);
+              animating.current = false; // Reset animating flag
+            }
+          };
+          deathAnimationId = requestAnimationFrame(animateDeath);
+        }
+        return { ...eagle, x: newX };
+      });
+      return newEagles.filter((eagle) => eagle.x < FINAL_COL + 3); // Fly past the end pavement
+    });
+  }, 30);
+  return () => clearInterval(interval);
+}, [gameOver, win, isDying, player.col]);
 
   // Handle keyboard and touch controls
   useEffect(() => {
@@ -301,15 +350,23 @@ export default function App() {
           // Player is doomed - prevent any further movement
           animating.current = true; // Lock movement
           
-          // Spawn a car if dying on road - death animation will be triggered when car hits
+          // Spawn appropriate death animation based on terrain
           if (board[CENTER_LANE][endCol].type === "road") {
+            // Car for road deaths
             setCarPositions(prev => [...prev, { 
               lane: 0, // Topmost lane
               col: endCol,
               y: -1.1 // Start fully off-screen above the board
             }]);
+          } else if (board[CENTER_LANE][endCol].type === "grass") {
+            // Eagle for grass deaths - flies across entire board
+            setEaglePositions(prev => [...prev, {
+              lane: CENTER_LANE, // Player's lane
+              col: 4, // Start from beginning pavement
+              x: -2 // Start off-screen to the left
+            }]);
           } else {
-            // If not on road, trigger death immediately
+            // If not on road or grass, trigger death immediately
             setIsDying(true);
             
             // Start death animation with requestAnimationFrame
@@ -409,7 +466,8 @@ export default function App() {
           background: COLORS.grass,
           border: "4px solid #444",
           overflow: "hidden",
-          boxShadow: "0 8px 32px #000a"
+          boxShadow: "0 8px 32px #000a",
+          boxSizing: "border-box"
         }}
       >
         {/* Board grid */}
@@ -445,11 +503,12 @@ export default function App() {
                   style={{
                     position: "absolute",
                     left: 0,
-                    top: l * (800 / LANES),
+                    top: Math.floor(l * (800 / LANES)),
                     width: COL_WIDTH,
-                    height: 800 / LANES,
+                    height: Math.ceil(800 / LANES),
                     background: row[c]?.type === "grass" ? COLORS.grass : (row[c]?.type === "pavement" ? COLORS.pavement : (row[c]?.type ? COLORS[row[c].type] : COLORS.grass)),
-                    overflow: "visible"
+                    overflow: "visible",
+                    borderBottom: l < LANES - 1 ? "1px solid rgba(0,0,0,0.1)" : "none" // Subtle border to prevent gaps
                   }}
                 >
                   {/* Grass decal (small, random) */}
@@ -588,17 +647,19 @@ export default function App() {
                         transition: { duration: 0.3, ease: "easeOut" }
                       }}
                       exit={{ scale: 1, opacity: 0 }}
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        top: 0,
-                        width: COL_WIDTH, // Full lane width
-                        height: (800 / LANES), // Full lane height
-                        zIndex: 15, // Higher than chicken (zIndex: 10)
-                        imageRendering: "pixelated"
-                      }}
+                                              style={{
+                          position: "absolute",
+                          left: 0,
+                          top: 0,
+                          width: COL_WIDTH, // Full lane width
+                          height: (800 / LANES), // Full lane height
+                          zIndex: 25, // Much higher than chicken (zIndex: 10)
+                          imageRendering: "pixelated"
+                        }}
                     />
                   ))}
+                  
+
                   
                   {/* Road block */}
                   {roadBlocks.some(block => block.col === c && block.lane === l) && (
@@ -646,6 +707,34 @@ export default function App() {
             console.log('Chicken frame loaded:', chickenAnimRef.current.frame, 'src:', isDying ? CHICKEN_DEAD_FRAMES[chickenAnimRef.current.frame] : CHICKEN_FRAMES[chickenAnimRef.current.frame]);
           }}
         />
+        
+        {/* Eagles absolutely positioned inside board container */}
+        {eaglePositions.map((eagle, i) => (
+          <motion.img
+            key={`eagle-${i}`}
+            src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]} // Animate eagle frames
+            alt="eagle"
+            initial={{ scale: 1, opacity: 0, x: 0 }}
+            animate={{
+              x: (eagle.x - firstVisibleCol) * COL_WIDTH,
+              scale: 1,
+              opacity: 1,
+              transition: { duration: 0.3, ease: "easeOut" }
+            }}
+            exit={{ scale: 1, opacity: 0 }}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: eagle.lane * (800 / LANES) + (800 / LANES) / 2,
+              transform: "translateY(-50%)",
+              width: 120, // Eagle size
+              height: 80,
+              zIndex: 25, // Much higher than chicken (zIndex: 10)
+              imageRendering: "pixelated",
+              pointerEvents: "none"
+            }}
+          />
+        ))}
       </div>
       {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
       {win && <div style={{ fontSize: 32, color: "lime" }}>You Win!</div>}
