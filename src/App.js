@@ -180,10 +180,17 @@ const SELECTOR_FRAMES = [
   process.env.PUBLIC_URL + "/game/Slector 01.png"
 ];
 
-const CAR_SPEED = 0.08; // Adjustable car speed for both kill and background cars
+const CAR_SPEEDS = {
+  easy: 0.05,
+  medium: 0.08,
+  hard: 0.12,
+  daredevil: 0.16
+};
+
 const EAGLE_SPEED = 0.05; // Adjustable eagle speed (slower)
 
 export default function App() {
+  const [difficulty, setDifficulty] = useState('medium');
   const [board, setBoard] = useState(makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
   const [score, setScore] = useState(0);
@@ -303,7 +310,7 @@ export default function App() {
     function loop() {
       setCarPositions((oldCars) => {
         const newCars = oldCars.map((car) => {
-          const newY = car.y + CAR_SPEED;
+          const newY = car.y + CAR_SPEEDS[difficulty];
           // Check if car is hitting the chicken (CENTER_LANE is 3)
           if (Math.abs(newY - CENTER_LANE) < 0.5 && !isDying && !gameOver) {
             setIsDying(true);
@@ -338,7 +345,7 @@ export default function App() {
     }
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [gameOver, win, isDying]);
+  }, [gameOver, win, isDying, difficulty]);
 
   // Animate eagles moving left to right across entire board
   useEffect(() => {
@@ -382,7 +389,7 @@ export default function App() {
     }
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [gameOver, win, isDying, player.col]);
+  }, [gameOver, win, isDying, player.col, difficulty]);
 
   // Background car spawning and animation system
   useEffect(() => {
@@ -428,7 +435,7 @@ export default function App() {
           lane: randomLane,
           col: spawnCol,
           y: -1.1, // Start above the board
-          speed: CAR_SPEED, // Same speed as death cars
+          speed: CAR_SPEEDS[difficulty], // Same speed as death cars
           carType: Math.floor(Math.random() * CARS.length) // Random car color
         }]);
       }
@@ -440,7 +447,7 @@ export default function App() {
       setBackgroundCars((oldCars) => {
         const newCars = oldCars.map((car) => ({
           ...car,
-          y: car.y + CAR_SPEED
+          y: car.y + CAR_SPEEDS[difficulty]
         }));
         return newCars.filter((car) => car.y < LANES + 1);
       });
@@ -451,7 +458,7 @@ export default function App() {
       clearInterval(spawnInterval);
       cancelAnimationFrame(frame);
     };
-  }, [gameOver, win, player.col, board]);
+  }, [gameOver, win, player.col, board, difficulty]);
 
   // Handle keyboard and touch controls
   useEffect(() => {
@@ -493,11 +500,10 @@ export default function App() {
     setDragStart({ x, y: 0 });
     setDragOffset({ x: 0, y: 0 });
     
-    // If not already in manual mode, center camera on chicken when starting drag
+    // If not already in manual mode, use current camera position
     if (!hasManualPosition) {
-      const centerOffset = -player.col * COL_WIDTH + (visibleCols * COL_WIDTH) / 2;
-      setManualScrollOffset(centerOffset);
-      setInitialScrollOffset(centerOffset);
+      setManualScrollOffset(finalScrollOffset);
+      setInitialScrollOffset(finalScrollOffset);
       setHasManualPosition(true); // Mark that user is now in manual mode
     } else {
       setInitialScrollOffset(manualScrollOffset);
@@ -741,8 +747,6 @@ export default function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Difficulty settings and multipliers
-  const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard', 'daredevil'
-  
   const DIFFICULTY_MULTIPLIERS = {
     easy: [1.00, 1.09, 1.20, 1.33, 1.50, 1.71, 2.00, 2.40, 3.00, 3.43, 5.00],
     medium: [1.09, 1.43, 1.94, 2.71, 3.94, 6.07, 10.04, 18.40, 26.29, 39.43, 63.09],
