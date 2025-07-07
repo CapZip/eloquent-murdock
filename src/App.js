@@ -181,13 +181,13 @@ const SELECTOR_FRAMES = [
 ];
 
 const CAR_SPEEDS = {
-  easy: 0.05,
-  medium: 0.08,
-  hard: 0.12,
-  daredevil: 0.16
+  easy: 0.03,
+  medium: 0.04,
+  hard: 0.06,
+  daredevil: 0.10
 };
 
-const EAGLE_SPEED = 0.05; // Adjustable eagle speed (slower)
+const EAGLE_SPEED = window.innerWidth <= 768 ? 0.05 * 1.3 : 0.05; // 30% faster on mobile
 
 export default function App() {
   const [difficulty, setDifficulty] = useState('medium');
@@ -246,11 +246,14 @@ export default function App() {
 
   // Simple animation loop for smooth frame updates
   useEffect(() => {
-    const interval = setInterval(() => {
+    let animationId;
+    const animate = () => {
       setForceRerender(f => f + 1);
-    }, 16); // 60fps
+      animationId = requestAnimationFrame(animate);
+    };
+    animationId = requestAnimationFrame(animate);
     
-    return () => clearInterval(interval);
+    return () => cancelAnimationFrame(animationId);
   }, []);
 
   // Calculate first visible column for centering
@@ -427,19 +430,27 @@ export default function App() {
       }
       
       // Prevent overlapping: don't spawn if a car is already in this lane/col near the top
-      if (
-        spawnCol !== null &&
-        !backgroundCars.some(car => car.lane === randomLane && car.col === spawnCol && car.y < 1)
-      ) {
-        setBackgroundCars(prev => [...prev, {
-          lane: randomLane,
-          col: spawnCol,
-          y: -1.1, // Start above the board
-          speed: CAR_SPEEDS[difficulty], // Same speed as death cars
-          carType: Math.floor(Math.random() * CARS.length) // Random car color
-        }]);
+      if (spawnCol !== null) {
+        // Check for minimum distance between cars in the same lane/col
+        const minDistance = 2; // Minimum distance between cars
+        const hasNearbyCar = backgroundCars.some(car => 
+          car.lane === randomLane && 
+          car.col === spawnCol && 
+          car.y > -minDistance && 
+          car.y < minDistance
+        );
+        
+        if (!hasNearbyCar) {
+          setBackgroundCars(prev => [...prev, {
+            lane: randomLane,
+            col: spawnCol,
+            y: -1.1, // Start above the board
+            speed: CAR_SPEEDS[difficulty], // Same speed as death cars
+            carType: Math.floor(Math.random() * CARS.length) // Random car color
+          }]);
+        }
       }
-    }, 1000); // Check for spawning every 1 second
+    }, 800 + Math.random() * 800); // Randomize spawn interval between 0.8-1.6 seconds
     
     // Animate background cars moving down
     let frame;
@@ -1182,14 +1193,22 @@ export default function App() {
                 />
                 {/* Cars absolutely positioned inside board container */}
                 {carPositions.map((car, i) => (
-                  <img
+                  <motion.img
                     key={`car-${i}`}
                     src={CARS[car.carType || 0]}
                     alt="car"
+                    initial={{ scale: 1, opacity: 1, x: car.col * COL_WIDTH, y: car.y * (800 / LANES) }}
+                    animate={{
+                      x: car.col * COL_WIDTH,
+                      y: car.y * (800 / LANES),
+                      scale: 1,
+                      opacity: 1
+                    }}
+                    exit={{ scale: 1, opacity: 0 }}
                     style={{
                       position: "absolute",
-                      left: car.col * COL_WIDTH,
-                      top: car.y * (800 / LANES),
+                      left: 0,
+                      top: 0,
                       width: COL_WIDTH,
                       height: (800 / LANES),
                       zIndex: isDying ? 200 : 50, // above chicken when dying
