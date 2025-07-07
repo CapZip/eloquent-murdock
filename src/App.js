@@ -333,7 +333,7 @@ export default function App() {
                 chickenAnimRef.current.frame = 31;
                 setGameOver(true);
                 setStreak(0);
-                setCurrentWinnings(8);
+                setCurrentWinnings(betAmount);
                 setCurrentMultiplier(1.0);
                 animating.current = false;
               }
@@ -377,7 +377,7 @@ export default function App() {
                 chickenAnimRef.current.frame = 31;
                 setGameOver(true);
                 setStreak(0);
-                setCurrentWinnings(8);
+                setCurrentWinnings(betAmount);
                 setCurrentMultiplier(1.0);
                 animating.current = false;
               }
@@ -605,7 +605,7 @@ export default function App() {
     setCurrentMultiplier(newMultiplier);
     
     // Update current winnings
-    setCurrentWinnings(8 * newMultiplier);
+    setCurrentWinnings(betAmount * newMultiplier);
     
     // Reset camera to center on chicken when moving
     setManualScrollOffset(0); // Reset to automatic camera mode
@@ -674,7 +674,7 @@ export default function App() {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
                 setStreak(0); // Reset streak on death
-                setCurrentWinnings(8); // Reset winnings on death
+                setCurrentWinnings(betAmount); // Reset winnings on death
                 setCurrentMultiplier(1.0); // Reset multiplier on death
                 animating.current = false; // Reset animating flag
               }
@@ -760,10 +760,43 @@ export default function App() {
   const [streak, setStreak] = useState(0);
   const [currentWinnings, setCurrentWinnings] = useState(8);
   const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
+  const [betAmount, setBetAmount] = useState(8);
+  const [betFraction, setBetFraction] = useState("MAX");
 
   // Difficulty button handlers
   const handleDifficultyChange = (newDifficulty) => {
     setDifficulty(newDifficulty);
+  };
+
+  // Bet amount handlers
+  const handleBetAmountChange = (e) => {
+    const value = parseFloat(e.target.value) || 0;
+    setBetAmount(Math.max(0, value));
+    setBetFraction("CUSTOM");
+  };
+  
+  const handleBetFractionClick = (fraction) => {
+    setBetFraction(fraction);
+    let newAmount = betAmount; // Use current bet amount as base
+    
+    switch (fraction) {
+      case "1/4":
+        newAmount = Math.floor(betAmount * 0.25);
+        break;
+      case "1/2":
+        newAmount = Math.floor(betAmount * 0.5);
+        break;
+      case "3/4":
+        newAmount = Math.floor(betAmount * 0.75);
+        break;
+      case "MAX":
+        newAmount = betAmount; // Keep current amount for MAX
+        break;
+      default:
+        newAmount = betAmount;
+    }
+    
+    setBetAmount(Math.max(1, newAmount));
   };
 
   const coinTapGuard = useRef(false);
@@ -1262,7 +1295,7 @@ export default function App() {
                       {currentMultiplier.toFixed(1)}x
                     </div>
                     <div className="streak-multiplier-bet">
-                      Bet: $8
+                      Bet: ${betAmount}
                     </div>
                   </div>
                 </div>
@@ -1322,12 +1355,24 @@ export default function App() {
                       </div>
                     </div>
                     <div className="footer-section">
-                      <span className="footer-label">Bet Amount: <span className="footer-bet-amount">$8</span></span>
+                      <span className="footer-label">Bet Amount</span>
+                      <div className="footer-bet-input-container">
+                        <input
+                          type="number"
+                          value={betAmount}
+                          onChange={handleBetAmountChange}
+                          className="footer-bet-input"
+                          min="1"
+                          max="1000"
+                          step="1"
+                        />
+                        <span className="footer-bet-input-symbol">$</span>
+                      </div>
                       <div className="footer-btn-row">
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
                       </div>
                     </div>
                   </div>
@@ -1346,12 +1391,23 @@ export default function App() {
                     <div className="footer-section bet-section">
                       <span className="footer-label">Bet Amount</span>
                       <div className="footer-bet-row">
-                        <div className="footer-bet-amount">$8</div>
+                        <div className="footer-bet-input-container">
+                          <input
+                            type="number"
+                            value={betAmount}
+                            onChange={handleBetAmountChange}
+                            className="footer-bet-input"
+                            min="1"
+                            max="1000"
+                            step="1"
+                          />
+                          <span className="footer-bet-input-symbol">$</span>
+                        </div>
                         <div className="footer-btn-row desktop">
-                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                          <div className="footer-btn-wrap"><button className="footer-btn inactive"><img src="/game/UI/Small Button - inactive.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                          <div className="footer-btn-wrap"><button className="footer-btn active"><img src="/game/UI/Small Button Active.png" alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
                         </div>
                       </div>
                     </div>

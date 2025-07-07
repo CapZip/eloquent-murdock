@@ -39,20 +39,20 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 
 /* Make dying chicken slightly bigger to match alive chicken */
 .chicken-sprite[src*="Chicken Dead V2"] {
-  width: 150px !important;
-  height: 150px !important;
+  width: 110px !important;
+  height: 110px !important;
 }
 
 @media (max-width: 768px) {
   .chicken-sprite {
     /* Scale chicken down slightly on mobile */
-    width: 90px !important;
-    height: 90px !important;
+    width: 80px !important;
+    height: 80px !important;
   }
   
   .chicken-sprite[src*="Chicken Dead V2"] {
-    width: 110px !important;
-    height: 110px !important;
+    width: 90px !important;
+    height: 90px !important;
   }
 }
 
@@ -250,7 +250,7 @@ button:disabled {
   color: #FFD700;
   font-weight: bold;
   font-size: 16px;
-  min-width: 40px;
+  text-align: center;
 }
 .footer-btn-row {
   display: flex;
@@ -664,7 +664,7 @@ button:disabled {
 
 .streak-multiplier-tracker {
   position: absolute;
-  right: 2rem;
+  right: 1rem;
   top: 3.5rem;
   z-index: 50;
   display: block;
@@ -835,5 +835,89 @@ button:disabled {
 @media (min-width: 769px) {
   .streak-multiplier-tracker-mobile {
     display: none;
+  }
+}
+
+/* Bet input styles */
+.footer-bet-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.footer-bet-input {
+  background: #222;
+  border: 2px solid #444;
+  border-radius: 8px;
+  color: #FFD700;
+  font-family: 'Minecraft', sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  padding: 8px 12px 8px 24px;
+  width: 80px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.footer-bet-input:focus {
+  border-color: #FFD700;
+  box-shadow: 0 0 8px #FFD70044;
+}
+
+.footer-bet-input-symbol {
+  position: absolute;
+  left: 8px;
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+/* Remove spinner for webkit browsers */
+.footer-bet-input::-webkit-outer-spin-button,
+.footer-bet-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove spinner for Firefox */
+.footer-bet-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Mobile bet input adjustments */
+@media (max-width: 768px) {
+  .footer-bet-input {
+    width: 70px;
+    font-size: 14px;
+    padding: 6px 10px 6px 20px;
+  }
+  
+  .footer-bet-input-symbol {
+    font-size: 14px;
+    left: 6px;
+  }
+}
+
+/* Desktop bet input adjustments */
+@media (min-width: 769px) {
+  .footer-bet-input-container {
+    margin: 4px 0;
+  }
+  
+  .footer-bet-input {
+    width: 90px;
+    font-size: 18px;
+    padding: 10px 14px 10px 28px;
+  }
+  
+  .footer-bet-input-symbol {
+    font-size: 18px;
+    left: 10px;
   }
 }
