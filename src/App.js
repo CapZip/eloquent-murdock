@@ -1077,6 +1077,7 @@ export default function App() {
                           }
                         }}
                         onTouchStart={e => {
+                          e.preventDefault(); // Prevents iOS Safari from firing both touch and click events (double-action bug)
                           if (c !== player.col + 1) return;
                           if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
                             moveChicken();
@@ -1171,8 +1172,8 @@ export default function App() {
                     left: chickenAnimRef.current.col * COL_WIDTH + COL_WIDTH * 0.5,
                     top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
                     transform: "translate(-50%, -50%)",
-                    width: 100,
-                    height: 100,
+                    width: isDying ? 150 : 100,
+                    height: isDying ? 150 : 100,
                     zIndex: 150, // Very high z-index to appear above everything
                     imageRendering: "pixelated",
                     pointerEvents: "none",
