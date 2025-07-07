@@ -180,6 +180,9 @@ const SELECTOR_FRAMES = [
   process.env.PUBLIC_URL + "/game/Slector 01.png"
 ];
 
+const CAR_SPEED = 0.08; // Adjustable car speed for both kill and background cars
+const EAGLE_SPEED = 0.05; // Adjustable eagle speed (slower)
+
 export default function App() {
   const [board, setBoard] = useState(makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
@@ -296,37 +299,33 @@ export default function App() {
   // Animate cars moving top to bottom
   useEffect(() => {
     if (gameOver || win) return;
-    const interval = setInterval(() => {
+    let frame;
+    function loop() {
       setCarPositions((oldCars) => {
         const newCars = oldCars.map((car) => {
-          const newY = car.y + 0.35;
+          const newY = car.y + CAR_SPEED;
           // Check if car is hitting the chicken (CENTER_LANE is 3)
           if (Math.abs(newY - CENTER_LANE) < 0.5 && !isDying && !gameOver) {
-            // Car is hitting chicken - trigger death animation
             setIsDying(true);
             animating.current = true;
-            
             // Start death animation with requestAnimationFrame
             let deathStartTime = null;
             let deathAnimationId = null;
-            
             const animateDeath = (timestamp) => {
               if (!deathStartTime) deathStartTime = timestamp;
               const elapsed = timestamp - deathStartTime;
               const frameTime = 60; // 60ms per frame for smoother death
-              
               const currentFrame = Math.floor(elapsed / frameTime);
               chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
-              
-              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
+              if (elapsed < 1920) {
                 deathAnimationId = requestAnimationFrame(animateDeath);
               } else {
-                chickenAnimRef.current.frame = 31; // Stay on last death frame
+                chickenAnimRef.current.frame = 31;
                 setGameOver(true);
-                setStreak(0); // Reset streak on death
-                setCurrentWinnings(8); // Reset winnings on death
-                setCurrentMultiplier(1.0); // Reset multiplier on death
-                animating.current = false; // Reset animating flag
+                setStreak(0);
+                setCurrentWinnings(8);
+                setCurrentMultiplier(1.0);
+                animating.current = false;
               }
             };
             deathAnimationId = requestAnimationFrame(animateDeath);
@@ -335,54 +334,54 @@ export default function App() {
         });
         return newCars.filter((car) => car.y < LANES + 1);
       });
-    }, 30);
-    return () => clearInterval(interval);
+      frame = requestAnimationFrame(loop);
+    }
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
   }, [gameOver, win, isDying]);
 
   // Animate eagles moving left to right across entire board
   useEffect(() => {
     if (gameOver || win) return;
-    const interval = setInterval(() => {
+    let frame;
+    function loop() {
       setEaglePositions((oldEagles) => {
         const newEagles = oldEagles.map((eagle) => {
-          const newX = eagle.x + 0.38; // Move right, slightly faster
+          const newX = eagle.x + EAGLE_SPEED;
           // Check if eagle is hitting the chicken (player's column)
           if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
-            // Eagle is hitting chicken - trigger death animation
             setIsDying(true);
             animating.current = true;
-            
             // Start death animation with requestAnimationFrame
             let deathStartTime = null;
             let deathAnimationId = null;
-            
             const animateDeath = (timestamp) => {
               if (!deathStartTime) deathStartTime = timestamp;
               const elapsed = timestamp - deathStartTime;
-              const frameTime = 60; // 60ms per frame for smoother death
-              
+              const frameTime = 60;
               const currentFrame = Math.floor(elapsed / frameTime);
-              chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
-              
-              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
+              chickenAnimRef.current.frame = Math.min(currentFrame, 31);
+              if (elapsed < 1920) {
                 deathAnimationId = requestAnimationFrame(animateDeath);
               } else {
-                chickenAnimRef.current.frame = 31; // Stay on last death frame
+                chickenAnimRef.current.frame = 31;
                 setGameOver(true);
-                setStreak(0); // Reset streak on death
-                setCurrentWinnings(8); // Reset winnings on death
-                setCurrentMultiplier(1.0); // Reset multiplier on death
-                animating.current = false; // Reset animating flag
+                setStreak(0);
+                setCurrentWinnings(8);
+                setCurrentMultiplier(1.0);
+                animating.current = false;
               }
             };
             deathAnimationId = requestAnimationFrame(animateDeath);
           }
           return { ...eagle, x: newX };
         });
-        return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6); // Fly past the end pavement
+        return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6);
       });
-    }, 30);
-    return () => clearInterval(interval);
+      frame = requestAnimationFrame(loop);
+    }
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
   }, [gameOver, win, isDying, player.col]);
 
   // Background car spawning and animation system
@@ -429,26 +428,28 @@ export default function App() {
           lane: randomLane,
           col: spawnCol,
           y: -1.1, // Start above the board
-          speed: 0.35, // Same speed as death cars
+          speed: CAR_SPEED, // Same speed as death cars
           carType: Math.floor(Math.random() * CARS.length) // Random car color
         }]);
       }
     }, 1000); // Check for spawning every 1 second
     
     // Animate background cars moving down
-    const animateInterval = setInterval(() => {
+    let frame;
+    function loop() {
       setBackgroundCars((oldCars) => {
         const newCars = oldCars.map((car) => ({
           ...car,
-          y: car.y + 0.35 // Same speed as death cars
+          y: car.y + CAR_SPEED
         }));
-        return newCars.filter((car) => car.y < LANES + 1); // Remove cars that go off screen
+        return newCars.filter((car) => car.y < LANES + 1);
       });
-    }, 30); // Same interval as death cars
-    
+      frame = requestAnimationFrame(loop);
+    }
+    frame = requestAnimationFrame(loop);
     return () => {
       clearInterval(spawnInterval);
-      clearInterval(animateInterval);
+      cancelAnimationFrame(frame);
     };
   }, [gameOver, win, player.col, board]);
 
