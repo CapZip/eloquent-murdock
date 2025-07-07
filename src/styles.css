@@ -664,7 +664,7 @@ button:disabled {
 
 .streak-multiplier-tracker {
   position: absolute;
-  right: 1rem;
+  right: 2rem;
   top: 3.5rem;
   z-index: 50;
   display: block;
