@@ -764,6 +764,8 @@ export default function App() {
     setDifficulty(newDifficulty);
   };
 
+  const coinTapGuard = useRef(false);
+
   // Render
   if (!imagesLoaded) {
     return (
@@ -1072,12 +1074,18 @@ export default function App() {
                           cursor: c === player.col + 1 ? "pointer" : "default"
                         }}
                         onClick={() => {
+                          if (coinTapGuard.current) return;
+                          coinTapGuard.current = true;
+                          setTimeout(() => { coinTapGuard.current = false; }, 500);
                           if (c === player.col + 1 && !animating.current && !gameOver && !win && !cashedOut && !isDying) {
                             moveChicken();
                           }
                         }}
                         onTouchStart={e => {
                           e.preventDefault(); // Prevents iOS Safari from firing both touch and click events (double-action bug)
+                          if (coinTapGuard.current) return;
+                          coinTapGuard.current = true;
+                          setTimeout(() => { coinTapGuard.current = false; }, 500);
                           if (c !== player.col + 1) return;
                           if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
                             moveChicken();
