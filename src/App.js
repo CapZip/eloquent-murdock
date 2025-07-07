@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import "./styles.css";
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -14,25 +14,7 @@ const VISIBLE_COLS = 9;
 const CENTER_LANE = Math.floor(LANES / 2);
 const PAVEMENT_START_COL = 4;
 
-// Animation and rendering constants
-const BOARD_HEIGHT = 800;
-const LANE_HEIGHT = BOARD_HEIGHT / LANES;
-const CHICKEN_SIZE = 100;
-const CHICKEN_DEAD_SIZE = 150;
-const EAGLE_WIDTH = 200;
-const EAGLE_HEIGHT = 140;
-const COIN_SIZE = 85;
-const COIN_FRAME_SIZE = 95;
-const SELECTOR_SIZE = 105;
-const SELECTOR_SIZE_LARGE = 125;
-const DEATH_ANIMATION_DURATION = 1920; // 32 frames * 60ms
-const DEATH_FRAME_TIME = 60; // 60ms per frame
-const WALK_ANIMATION_INTERVAL = 50; // 50ms per frame
-const WALK_ANIMATION_DURATION = 300; // 300ms total
-const CAR_SPAWN_MIN_DISTANCE = 2;
-const CAR_SPAWN_INTERVAL_MIN = 800;
-const CAR_SPAWN_INTERVAL_MAX = 1600;
-
+const CHICKEN = process.env.PUBLIC_URL + "/game/Chicken Walk V2/Chicken Walk V2 003.png";
 const CAR_YELLOW = process.env.PUBLIC_URL + "/game/Car Yellow V2 000.png";
 const CAR_RED = process.env.PUBLIC_URL + "/game/Car Red V2 000.png";
 const CAR_GREEN = process.env.PUBLIC_URL + "/game/Car Green V2 000.png";
@@ -208,28 +190,30 @@ const CAR_SPEEDS = {
 const EAGLE_SPEED = window.innerWidth <= 768 ? 0.05 * 1.3 : 0.05; // 30% faster on mobile
 
 export default function App() {
-  // All useState and useRef hooks should be declared first
   const [difficulty, setDifficulty] = useState('medium');
   const [board, setBoard] = useState(makeBoard());
-  const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 });
+  const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [win, setWin] = useState(false);
   const [cashedOut, setCashedOut] = useState(false);
   const [hash, setHash] = useState(generateHash());
+  const [animCol, setAnimCol] = useState(4);
   const animating = useRef(false);
-  const [carPositions, setCarPositions] = useState(() => makeCars(board));
-  const [eaglePositions, setEaglePositions] = useState([]);
+  const [carPositions, setCarPositions] = useState(() => makeCars(board)); // { lane, col, y }
+  const [eaglePositions, setEaglePositions] = useState([]); // { lane, col, x }
   const chickenAnimRef = useRef({ col: 4, frame: 3 });
   const [forceRerender, setForceRerender] = useState(0);
   const [isDying, setIsDying] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [roadBlocks, setRoadBlocks] = useState([]);
-  const [claimedCoins, setClaimedCoins] = useState([]);
-  const [backgroundCars, setBackgroundCars] = useState([]);
+  const [roadBlocks, setRoadBlocks] = useState([]); // Array of {col, lane} positions
+  const [claimedCoins, setClaimedCoins] = useState([]); // Array of claimed coin columns
+  const [backgroundCars, setBackgroundCars] = useState([]); // Array of {lane, col, y, speed, carType}
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   const [selectorFrame, setSelectorFrame] = useState(0);
   const [selectedToken, setSelectedToken] = useState("SOLANA");
+  
+  // Drag state variables
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -239,12 +223,9 @@ export default function App() {
   const [hasManualPosition, setHasManualPosition] = useState(false);
   const dragRef = useRef(null);
   const lastDragTime = useRef(0);
+  
+  // Prevent holding spacebar
   const spaceHeld = useRef(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [currentWinnings, setCurrentWinnings] = useState(8);
-  const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
-  const coinTapGuard = useRef(false);
   
   const tokenOptions = [
     { label: "BONK", value: "BONK", icon: "🐕" },
@@ -513,7 +494,7 @@ export default function App() {
   }, [player, animating, gameOver, win, cashedOut]);
 
   // Drag event handlers for draggable game board
-  const handlePointerDown = useCallback((e) => {
+  const handlePointerDown = (e) => {
     // Don't start drag if clicking on a coin or UI element
     if (e.target.closest('.next-claimable-coin') || 
         e.target.closest('.game-header') || 
@@ -543,9 +524,9 @@ export default function App() {
     
     // Set pointer capture for consistent behavior
     dragRef.current.setPointerCapture(e.pointerId);
-  }, [finalScrollOffset, hasManualPosition, manualScrollOffset]);
+  };
 
-  const handlePointerMove = useCallback((e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
     
@@ -578,9 +559,9 @@ export default function App() {
     }
     setDragOffset({ x: deltaX, y: 0 });
     lastDragTime.current = Date.now();
-  }, [isDragging, dragStart, initialScrollOffset, board, visibleCols, manualScrollOffset]);
+  };
 
-  const handlePointerUp = useCallback((e) => {
+  const handlePointerUp = (e) => {
     if (!isDragging) return;
     
     setIsDragging(false);
@@ -597,12 +578,12 @@ export default function App() {
     if (dragRef.current) {
       dragRef.current.releasePointerCapture(e.pointerId);
     }
-  }, [isDragging, dragOffset.x]);
+  };
 
   // Animate chicken movement
-  const moveChicken = useCallback(() => {
+  const moveChicken = () => {
     if (animating.current) return;
-    if (isDying) return; // Prevent double-triggering of death logic
+    if (isDying) return;
     if (player.col >= FINAL_COL) return;
     animating.current = true;
     
@@ -708,7 +689,7 @@ export default function App() {
         }
       }
     }, 300);
-  }, [animating, isDying, player.col, board, streak, difficulty, hash]);
+  };
 
   // Keep chickenAnimRef in sync with player.col (only when not animating)
   useEffect(() => {
@@ -765,6 +746,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   // Difficulty settings and multipliers
   const DIFFICULTY_MULTIPLIERS = {
     easy: [1.00, 1.09, 1.20, 1.33, 1.50, 1.71, 2.00, 2.40, 3.00, 3.43, 5.00],
@@ -773,10 +756,17 @@ export default function App() {
     daredevil: [1.60, 2.74, 4.85, 8.90, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87]
   };
 
+  // Streak and winnings tracking
+  const [streak, setStreak] = useState(0);
+  const [currentWinnings, setCurrentWinnings] = useState(8);
+  const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
+
   // Difficulty button handlers
-  const handleDifficultyChange = useCallback((newDifficulty) => {
+  const handleDifficultyChange = (newDifficulty) => {
     setDifficulty(newDifficulty);
-  }, []);
+  };
+
+  const coinTapGuard = useRef(false);
 
   // Render
   if (!imagesLoaded) {
@@ -998,7 +988,7 @@ export default function App() {
                         {/* Car in this lane/column (top to bottom) */}
                         {carPositions.filter((car) => car.lane === l && car.col === c).map((car, i) => (
                           <motion.img
-                            key={`car-${car.lane}-${car.col}-${car.carType}-${Math.round(car.y * 100)}`}
+                            key={`car-${l}-${c}-${i}`}
                             src={CARS[car.carType || 0]}
                             alt="car"
                             initial={{ scale: 1, opacity: 0, y: 0 }}
@@ -1167,7 +1157,7 @@ export default function App() {
                 {/* Render background cars globally for correct camera movement */}
                 {backgroundCars.map((car, i) => (
                   <img
-                    key={`bg-car-${car.lane}-${car.col}-${car.carType}-${Math.round(car.y * 100)}`}
+                    key={`bg-car-${i}`}
                     src={CARS[car.carType]}
                     alt="background car"
                     style={{
@@ -1204,7 +1194,7 @@ export default function App() {
                 {/* Cars absolutely positioned inside board container */}
                 {carPositions.map((car, i) => (
                   <motion.img
-                    key={`car-${car.lane}-${car.col}-${car.carType}-${Math.round(car.y * 100)}`}
+                    key={`car-${i}`}
                     src={CARS[car.carType || 0]}
                     alt="car"
                     initial={{ scale: 1, opacity: 1, x: car.col * COL_WIDTH, y: car.y * (800 / LANES) }}
@@ -1230,7 +1220,7 @@ export default function App() {
                 {/* Eagles absolutely positioned inside board container */}
                 {eaglePositions.map((eagle, i) => (
                   <motion.img
-                    key={`eagle-${eagle.lane}-${eagle.col}-${Math.round(eagle.x * 100)}`}
+                    key={`eagle-${i}`}
                     src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
                     alt="eagle"
                     initial={{ scale: 1, opacity: 0, x: 0 }}
