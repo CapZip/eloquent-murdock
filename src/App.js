@@ -1016,7 +1016,8 @@ export default function App() {
                             style={{
                               position: "absolute",
                               left: "7%",
-                              bottom: "90%",
+                              bottom: "100%",
+                              marginBottom: "40px",
                               width: 120,
                               height: 60,
                               zIndex: 5,
