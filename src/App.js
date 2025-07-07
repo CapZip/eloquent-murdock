@@ -572,6 +572,7 @@ export default function App() {
   // Animate chicken movement
   const moveChicken = () => {
     if (animating.current) return;
+    if (isDying) return;
     if (player.col >= FINAL_COL) return;
     animating.current = true;
     
@@ -628,21 +629,10 @@ export default function App() {
           // Spawn appropriate death animation based on terrain
           if (board[CENTER_LANE][endCol].type === "road") {
             // Car for road deaths
-            if (window.innerWidth <= 768) {
-              setCarPositions([{ 
-                lane: 0, // Topmost lane
-                col: endCol,
-                y: -1.1, // Start fully off-screen above the board
-                carType: Math.floor(Math.random() * CARS.length) // Random car color
-              }]);
-            } else {
-              setCarPositions(prev => [...prev, { 
-                lane: 0, // Topmost lane
-                col: endCol,
-                y: -1.1, // Start fully off-screen above the board
-                carType: Math.floor(Math.random() * CARS.length) // Random car color
-              }]);
-            }
+            setCarPositions(prev => [
+              ...prev.filter(car => !(car.lane === 0 && car.col === endCol)),
+              { lane: 0, col: endCol, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
+            ]);
           } else if (board[CENTER_LANE][endCol].type === "grass") {
             // Eagle for grass deaths - flies across entire board
             const eagleStartCol = Math.max(0, endCol - 3);
@@ -1165,7 +1155,7 @@ export default function App() {
                       top: car.y * (800 / LANES),
                       width: COL_WIDTH,
                       height: (800 / LANES),
-                      zIndex: 15, // Above trees but below coins and chicken
+                      zIndex: 60, // Above trees but below coins and chicken
                       imageRendering: "pixelated",
                       pointerEvents: "none",
                       opacity: 1 // Normal opacity
