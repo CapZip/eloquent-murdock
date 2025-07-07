@@ -645,10 +645,11 @@ export default function App() {
             }
           } else if (board[CENTER_LANE][endCol].type === "grass") {
             // Eagle for grass deaths - flies across entire board
+            const eagleStartCol = Math.max(0, endCol - 3);
             setEaglePositions(prev => [...prev, {
               lane: CENTER_LANE, // Player's lane
-              col: 4, // Start from beginning pavement
-              x: -2 // Start off-screen to the left
+              col: eagleStartCol, // Start closer to the player
+              x: eagleStartCol - 2 // Start off-screen to the left of eagleStartCol
             }]);
           } else {
             // If not on road or grass, trigger death immediately
