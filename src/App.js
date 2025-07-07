@@ -14,7 +14,7 @@ const VISIBLE_COLS = 9;
 const CENTER_LANE = Math.floor(LANES / 2);
 const PAVEMENT_START_COL = 4;
 
-const CHICKEN = process.env.PUBLIC_URL + "/game/Chicken Walk V2/Chicken Walk V2 000.png";
+const CHICKEN = process.env.PUBLIC_URL + "/game/Chicken Walk V2/Chicken Walk V2 003.png";
 const CAR_YELLOW = process.env.PUBLIC_URL + "/game/Car Yellow V2 000.png";
 const CAR_RED = process.env.PUBLIC_URL + "/game/Car Red V2 000.png";
 const CAR_GREEN = process.env.PUBLIC_URL + "/game/Car Green V2 000.png";
@@ -202,7 +202,7 @@ export default function App() {
   const animating = useRef(false);
   const [carPositions, setCarPositions] = useState(() => makeCars(board)); // { lane, col, y }
   const [eaglePositions, setEaglePositions] = useState([]); // { lane, col, x }
-  const chickenAnimRef = useRef({ col: 4, frame: 0 });
+  const chickenAnimRef = useRef({ col: 4, frame: 3 });
   const [forceRerender, setForceRerender] = useState(0);
   const [isDying, setIsDying] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -610,7 +610,7 @@ export default function App() {
     // End animation after transition duration
     setTimeout(() => {
       clearInterval(walkInterval);
-      chickenAnimRef.current.frame = 0; // Back to idle
+      chickenAnimRef.current.frame = 3; // Back to idle
       animating.current = false;
       
       // Hash-based danger check AFTER movement animation completes
