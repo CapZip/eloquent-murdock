@@ -1155,7 +1155,7 @@ export default function App() {
                       top: car.y * (800 / LANES),
                       width: COL_WIDTH,
                       height: (800 / LANES),
-                      zIndex: 60, // Above trees but below coins and chicken
+                      zIndex: 60, // Above coins, below chicken/kill cars
                       imageRendering: "pixelated",
                       pointerEvents: "none",
                       opacity: 1 // Normal opacity
@@ -1219,7 +1219,7 @@ export default function App() {
                       transform: "translateY(-50%)",
                       width: 200, // Bigger
                       height: 140, // Bigger
-                      zIndex: isDying ? 200 : 25, // above chicken when dying
+                      zIndex: 201, // Above chicken, coins, and background cars
                       imageRendering: "pixelated",
                       pointerEvents: "none"
                     }}
