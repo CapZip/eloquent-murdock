@@ -39,8 +39,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 
 /* Make dying chicken slightly bigger to match alive chicken */
 .chicken-sprite[src*="Chicken Dead V2"] {
-  width: 110px !important;
-  height: 110px !important;
+  width: 140px !important;
+  height: 140px !important;
 }
 
 @media (max-width: 768px) {
@@ -51,8 +51,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
   }
   
   .chicken-sprite[src*="Chicken Dead V2"] {
-    width: 90px !important;
-    height: 90px !important;
+    width: 110px !important;
+    height: 110px !important;
   }
 }
 

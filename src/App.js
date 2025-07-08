@@ -887,7 +887,7 @@ export default function App() {
               style={{
                 position: "relative",
                 width: visibleCols * COL_WIDTH,
-                height: 800,
+                height: 725,
                 margin: "24px auto",
                 marginBottom: "0",
                 marginTop: finalCameraYOffset,
@@ -1215,8 +1215,8 @@ export default function App() {
                     left: chickenAnimRef.current.col * COL_WIDTH + COL_WIDTH * 0.5,
                     top: CENTER_LANE * (800 / LANES) + (800 / LANES) / 2,
                     transform: "translate(-50%, -50%)",
-                    width: isDying ? 150 : 100,
-                    height: isDying ? 150 : 100,
+                    width: isDying ? 180 : 100,
+                    height: isDying ? 180 : 100,
                     zIndex: 150, // Very high z-index to appear above everything
                     imageRendering: "pixelated",
                     pointerEvents: "none",
