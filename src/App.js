@@ -401,6 +401,7 @@ function GameApp() {
             } else {
               chickenAnimRef.current.frame = 31; // Stay on last death frame
               setGameOver(true);
+              setIsDying(false); // Reset dying state so modal shows
               setStreak(0); // Reset streak on death
               setCurrentWinnings(betAmount); // Reset winnings on death
               setCurrentMultiplier(1.0); // Reset multiplier on death
@@ -572,6 +573,7 @@ function GameApp() {
               } else {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
+                setIsDying(false); // Reset dying state so modal shows
                 setStreak(0); // Reset streak on death
                 setCurrentWinnings(betAmount); // Reset winnings on death
                 setCurrentMultiplier(1.0); // Reset multiplier on death
@@ -607,6 +609,7 @@ function GameApp() {
               } else {
                 chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
+                setIsDying(false); // Reset dying state so modal shows
                 setStreak(0); // Reset streak on death
                 setCurrentWinnings(betAmount); // Reset winnings on death
                 setCurrentMultiplier(1.0); // Reset multiplier on death
@@ -940,12 +943,15 @@ function GameApp() {
   // Add these useEffects inside GameApp:
   useEffect(() => {
     if (gameOver && !isDying) {
+      // Store final streak before resetting
+      setFinalStreak(streak);
+      
       Swal.fire({
-        title: 'Game Over!',
-        text: `You survived ${finalStreak} moves and earned $${currentWinnings.toFixed(2)}`,
+        title: '💀 GAME OVER 💀',
+        text: `You died after ${finalStreak} moves! Final winnings: $${currentWinnings.toFixed(2)}`,
         icon: 'error',
-        confirmButtonText: 'Play Again',
-        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Try Again',
+        confirmButtonColor: '#dc3545',
         allowOutsideClick: false,
         allowEscapeKey: false
       }).then((result) => {
