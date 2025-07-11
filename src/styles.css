@@ -81,6 +81,23 @@
   background-color: #44ff44 !important;
 }
 
+/* Remove green background from SweetAlert2 success checkmark */
+.swal2-icon.swal2-success [class^='swal2-success-circular-line-left'] {
+  background: transparent !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-circular-line-right'] {
+  background: transparent !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line-tip'] {
+  background: #FFD700 !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line-long'] {
+  background: #FFD700 !important;
+}
+
 body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span {
   font-family: 'Minecraft', sans-serif !important;
   padding: 0;
@@ -433,7 +450,6 @@ button:disabled {
   .game-footer-desktop {
     display: flex;
     flex-direction: row;
-    margin-top: 15px;
     gap: 24px;
     align-items: stretch;
     width: 100%;
