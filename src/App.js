@@ -113,7 +113,7 @@ const preloadImages = (onComplete) => {
   });
 };
 
-function makeBoard() {
+function makeBoard(regenerateTrees = true) {
   // Returns a 2D array: board[lane][col] = { type, deco, hasCar, hasCoin, grassDecal, grassDecalStyle }
   const board = [];
   for (let l = 0; l < LANES; l++) {
@@ -125,13 +125,17 @@ function makeBoard() {
       let grassDecalStyle = null;
       if (type === "grass") {
         if (l !== CENTER_LANE) {
-          if (Math.random() < 0.3) deco = { type: "bush", img: BUSH, top: Math.random() * 40 + 30, left: Math.random() * 30 + 10 };
-          else if (Math.random() < 0.15) deco = { type: "tree", img: Math.random() < 0.5 ? TREE : TREE2, top: Math.random() * 40 + 10, left: Math.random() * 30 + 5 };
+          if (regenerateTrees) {
+            // Generate new trees/bushes
+            if (Math.random() < 0.3) deco = { type: "bush", img: BUSH, top: Math.random() * 40 + 30, left: Math.random() * 30 + 10 };
+            else if (Math.random() < 0.15) deco = { type: "tree", img: Math.random() < 0.5 ? TREE : TREE2, top: Math.random() * 40 + 10, left: Math.random() * 30 + 5 };
+          }
+          // If not regenerating trees, deco stays null (will be preserved from existing board)
         } else {
           deco = null; // No trees or bushes in center lane
         }
         // Only spawn a grass decal in ~85% of grass tiles
-        if (Math.random() < 0.85) {
+        if (regenerateTrees && Math.random() < 0.85) {
           grassDecal = GRASS_VARIANTS[Math.floor(Math.random() * GRASS_VARIANTS.length)];
           const size = 16 + Math.floor(Math.random() * 9); // 16-24px
           const left = `${10 + Math.random() * 80}%`;
@@ -172,6 +176,23 @@ function makeCars(board) {
   return [];
 }
 
+function resetBoardCoins(board) {
+  // Reset coins on the board while preserving trees and decorations
+  const newBoard = board.map((row) => row.slice());
+  for (let l = 0; l < newBoard.length; l++) {
+    for (let c = 0; c < newBoard[l].length; c++) {
+      const type = newBoard[l][c].type;
+      // Reset coins to their original positions
+      newBoard[l][c].hasCoin = l === CENTER_LANE && (
+        ((type === "road" || type === "grass") && c >= 4 && c < FINAL_COL) ||
+        (type === "pavement" && c === FINAL_COL)
+      );
+      // Keep existing deco (trees/bushes) and grassDecal unchanged
+    }
+  }
+  return newBoard;
+}
+
 // Responsive visible columns
 function getVisibleCols() {
   return window.innerWidth <= 768 ? 3 : 9;
@@ -195,7 +216,8 @@ const EAGLE_SPEED = window.innerWidth <= 768 ? 0.05 * 1.3 : 0.05; // 30% faster 
 function GameApp() {
   const { publicKey, signTransaction } = useWallet();
   const [difficulty, setDifficulty] = useState('medium');
-  const [board, setBoard] = useState(makeBoard());
+  // Create persistent board that doesn't change between games
+  const [board, setBoard] = useState(() => makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -291,8 +313,8 @@ function GameApp() {
         chickenAnimRef.current = { col: 4, frame: 3 };
         animating.current = false;
         
-        // Reset board for new game
-        setBoard(makeBoard());
+        // Reset game state but keep persistent board (trees stay the same)
+        // setBoard(makeBoard()); // Removed - board stays persistent
       }
     } catch (error) {
       console.error('Failed to start game:', error);
@@ -854,7 +876,7 @@ function GameApp() {
     }
     
     // Win (very rare with high hash)
-    if (player.col === FINAL_COL) setWin(true);
+    if (player.col === FINAL_COL && gameActive && !isDying && !gameOver) setWin(true);
   }, [player, carPositions, board]);
 
   useEffect(() => {
@@ -942,7 +964,7 @@ function GameApp() {
 
   // Add these useEffects inside GameApp:
   useEffect(() => {
-    if (gameOver && !isDying) {
+    if (gameOver && !isDying && !win && !cashedOut) {
       // Store final streak before resetting
       setFinalStreak(streak);
       
@@ -972,7 +994,7 @@ function GameApp() {
           setBackgroundCars([]);
           setRoadBlocks([]);
           setClaimedCoins([]);
-          setBoard(makeBoard());
+          setBoard(resetBoardCoins(board));
           setHash(generateHash());
           setGameActive(false);
           setGameId(null);
@@ -981,7 +1003,7 @@ function GameApp() {
         }
       });
     }
-  }, [gameOver, isDying]);
+  }, [gameOver, isDying, win, cashedOut]);
 
   useEffect(() => {
     if (win) {
@@ -1011,7 +1033,7 @@ function GameApp() {
           setBackgroundCars([]);
           setRoadBlocks([]);
           setClaimedCoins([]);
-          setBoard(makeBoard());
+          setBoard(resetBoardCoins(board));
           setHash(generateHash());
           setGameActive(false);
           setGameId(null);
