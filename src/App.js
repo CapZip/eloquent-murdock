@@ -393,27 +393,18 @@ function GameApp() {
           const animateDeath = (timestamp) => {
             if (!deathStartTime) deathStartTime = timestamp;
             const elapsed = timestamp - deathStartTime;
-            const frameTime = 60;
+            const frameTime = 60; // 60ms per frame for smoother death
             const currentFrame = Math.floor(elapsed / frameTime);
-            chickenAnimRef.current.frame = Math.min(currentFrame, 31);
-            if (elapsed < 1920) {
+            chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
+            if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
               deathAnimationId = requestAnimationFrame(animateDeath);
             } else {
-              chickenAnimRef.current.frame = 31;
+              chickenAnimRef.current.frame = 31; // Stay on last death frame
               setGameOver(true);
-              setIsDying(false); // Reset dying state so modal shows
-              // Store final streak before resetting
-              setFinalStreak(streak);
-              setStreak(0);
-              setCurrentWinnings(betAmount);
-              setCurrentMultiplier(1.0);
-              animating.current = false;
-              
-              // End game on server
-              const walletAddress = publicKey.toString();
-              endGameRound(gameId, newPosition, walletAddress).catch(error => {
-                console.error('Failed to end game:', error);
-              });
+              setStreak(0); // Reset streak on death
+              setCurrentWinnings(betAmount); // Reset winnings on death
+              setCurrentMultiplier(1.0); // Reset multiplier on death
+              animating.current = false; // Reset animating flag
             }
           };
           deathAnimationId = requestAnimationFrame(animateDeath);
@@ -496,10 +487,7 @@ function GameApp() {
   useEffect(() => {
     let animationId;
     const animate = () => {
-      // Only update forceRerender every 3 frames instead of every frame
-      if (Date.now() % 3 === 0) {
-        setForceRerender(f => f + 1);
-      }
+      setForceRerender(f => f + 1);
       animationId = requestAnimationFrame(animate);
     };
     animationId = requestAnimationFrame(animate);
@@ -579,15 +567,15 @@ function GameApp() {
               const frameTime = 60; // 60ms per frame for smoother death
               const currentFrame = Math.floor(elapsed / frameTime);
               chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
-              if (elapsed < 1920) {
+              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
                 deathAnimationId = requestAnimationFrame(animateDeath);
               } else {
-                chickenAnimRef.current.frame = 31;
+                chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
-                setStreak(0);
-                setCurrentWinnings(betAmount);
-                setCurrentMultiplier(1.0);
-                animating.current = false;
+                setStreak(0); // Reset streak on death
+                setCurrentWinnings(betAmount); // Reset winnings on death
+                setCurrentMultiplier(1.0); // Reset multiplier on death
+                animating.current = false; // Reset animating flag
               }
             };
             deathAnimationId = requestAnimationFrame(animateDeath);
@@ -614,15 +602,15 @@ function GameApp() {
               const frameTime = 60;
               const currentFrame = Math.floor(elapsed / frameTime);
               chickenAnimRef.current.frame = Math.min(currentFrame, 31);
-              if (elapsed < 1920) {
+              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
                 deathAnimationId = requestAnimationFrame(animateDeath);
               } else {
-                chickenAnimRef.current.frame = 31;
+                chickenAnimRef.current.frame = 31; // Stay on last death frame
                 setGameOver(true);
-                setStreak(0);
-                setCurrentWinnings(betAmount);
-                setCurrentMultiplier(1.0);
-                animating.current = false;
+                setStreak(0); // Reset streak on death
+                setCurrentWinnings(betAmount); // Reset winnings on death
+                setCurrentMultiplier(1.0); // Reset multiplier on death
+                animating.current = false; // Reset animating flag
               }
             };
             deathAnimationId = requestAnimationFrame(animateDeath);
