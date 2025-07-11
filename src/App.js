@@ -71,6 +71,11 @@ const EAGLE_FRAMES = Array.from({ length: 30 }, (_, i) =>
   process.env.PUBLIC_URL + `/game/Eagle Peck V2/Eagle Peck V2 ${String(i).padStart(3, '0')}.png`
 );
 
+// Simple hash generator for UI reset purposes
+const generateHash = () => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
 // Preload all images on component mount
 const preloadImages = (onComplete) => {
   const allImages = [
@@ -392,10 +397,10 @@ function GameApp() {
             } else {
               chickenAnimRef.current.frame = 31;
               setGameOver(true);
+              setIsDying(false); // Reset dying state so modal shows
               setStreak(0);
               setCurrentWinnings(betAmount);
               setCurrentMultiplier(1.0);
-              setGameActive(false);
               animating.current = false;
               
               // End game on server
@@ -459,6 +464,7 @@ function GameApp() {
         setGameActive(false);
         setCurrentWinnings(result.winnings);
         setCurrentMultiplier(result.multiplier);
+        setWin(true); // Show win modal on cashout
       }
     } catch (error) {
       console.error('Failed to cash out:', error);
@@ -484,7 +490,10 @@ function GameApp() {
   useEffect(() => {
     let animationId;
     const animate = () => {
-      setForceRerender(f => f + 1);
+      // Only update forceRerender every 3 frames instead of every frame
+      if (Date.now() % 3 === 0) {
+        setForceRerender(f => f + 1);
+      }
       animationId = requestAnimationFrame(animate);
     };
     animationId = requestAnimationFrame(animate);
@@ -542,11 +551,12 @@ function GameApp() {
     }
   }
 
-  // Animate cars moving top to bottom
+  // Combined car and eagle animation loop
   useEffect(() => {
     if (gameOver || win) return;
     let frame;
     function loop() {
+      // Update car positions
       setCarPositions((oldCars) => {
         const newCars = oldCars.map((car) => {
           const newY = car.y + CAR_SPEEDS[difficulty];
@@ -580,17 +590,8 @@ function GameApp() {
         });
         return newCars.filter((car) => car.y < LANES + 1);
       });
-      frame = requestAnimationFrame(loop);
-    }
-    frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
-  }, [gameOver, win, isDying, difficulty]);
-
-  // Animate eagles moving left to right across entire board
-  useEffect(() => {
-    if (gameOver || win) return;
-    let frame;
-    function loop() {
+      
+      // Update eagle positions
       setEaglePositions((oldEagles) => {
         const newEagles = oldEagles.map((eagle) => {
           const newX = eagle.x + EAGLE_SPEED;
@@ -624,11 +625,14 @@ function GameApp() {
         });
         return newEagles.filter((eagle) => eagle.x < FINAL_COL + 6);
       });
+      
       frame = requestAnimationFrame(loop);
     }
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [gameOver, win, isDying, player.col, difficulty]);
+  }, [gameOver, win, isDying, difficulty, player.col]);
+
+
 
   // Background car spawning and animation system
   useEffect(() => {
@@ -937,6 +941,85 @@ function GameApp() {
   };
 
   const coinTapGuard = useRef(false);
+
+  // Add these useEffects inside GameApp:
+  useEffect(() => {
+    if (gameOver && !isDying) {
+      Swal.fire({
+        title: 'Game Over!',
+        text: `You survived ${streak} moves and earned $${currentWinnings.toFixed(2)}`,
+        icon: 'error',
+        confirmButtonText: 'Play Again',
+        confirmButtonColor: '#3085d6',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Reset everything
+          setGameOver(false);
+          setWin(false);
+          setCashedOut(false);
+          setIsDying(false);
+          setStreak(0);
+          setScore(0);
+          setCurrentWinnings(betAmount);
+          setCurrentMultiplier(1.0);
+          setPlayer({ lane: CENTER_LANE, col: 4 });
+          setCurrentPosition(4);
+          setCarPositions([]);
+          setEaglePositions([]);
+          setBackgroundCars([]);
+          setRoadBlocks([]);
+          setClaimedCoins([]);
+          setBoard(makeBoard());
+          setHash(generateHash());
+          setGameActive(false);
+          setGameId(null);
+          animating.current = false;
+          chickenAnimRef.current = { col: 4, frame: 3 };
+        }
+      });
+    }
+  }, [gameOver, isDying]);
+
+  useEffect(() => {
+    if (win) {
+      Swal.fire({
+        title: '🎉 YOU WIN! 🎉',
+        text: `Congratulations! You reached the end and won $${currentWinnings.toFixed(2)}!`,
+        icon: 'success',
+        confirmButtonText: 'Play Again',
+        confirmButtonColor: '#28a745',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Reset everything
+          setGameOver(false);
+          setWin(false);
+          setCashedOut(false);
+          setIsDying(false);
+          setStreak(0);
+          setScore(0);
+          setCurrentWinnings(betAmount);
+          setCurrentMultiplier(1.0);
+          setPlayer({ lane: CENTER_LANE, col: 4 });
+          setCurrentPosition(4);
+          setCarPositions([]);
+          setEaglePositions([]);
+          setBackgroundCars([]);
+          setRoadBlocks([]);
+          setClaimedCoins([]);
+          setBoard(makeBoard());
+          setHash(generateHash());
+          setGameActive(false);
+          setGameId(null);
+          animating.current = false;
+          chickenAnimRef.current = { col: 4, frame: 3 };
+        }
+      });
+    }
+  }, [win]);
 
   // Render
   if (!imagesLoaded) {
@@ -1388,7 +1471,7 @@ function GameApp() {
                 {eaglePositions.map((eagle, i) => (
                   <motion.img
                     key={`eagle-${i}`}
-                    src={EAGLE_FRAMES[Math.floor((forceRerender / 2) % 30)]}
+                    src={EAGLE_FRAMES[Math.floor((Date.now() / 100) % 30)]}
                     alt="eagle"
                     initial={{ scale: 1, opacity: 0, x: 0 }}
                     animate={{
@@ -1413,7 +1496,6 @@ function GameApp() {
                 ))}
               </motion.div>
             </div>
-            {gameOver && !isDying && <div style={{ fontSize: 32, color: "red" }}>Game Over</div>}
             
             {/* Streak and Multiplier Tracker (Desktop) */}
             <div className="streak-multiplier-tracker">
@@ -1478,7 +1560,18 @@ function GameApp() {
                 <div className="game-footer-flex">
                   {/* Mobile Controls */}
                   <div className="game-footer-mobile">
-                  <div className="footer-btn-wrap w-full"><button className="footer-big-btn" onClick={startGame} disabled={isLoading}><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">{isLoading ? 'Starting...' : 'Start Game'}</span></button></div>
+                  <div className="footer-btn-wrap w-full">
+                    <button 
+                      className="footer-big-btn" 
+                      onClick={gameActive && !gameOver ? cashOut : startGame} 
+                      disabled={isLoading}
+                    >
+                      <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
+                      <span className="footer-big-btn-text">
+                        {isLoading ? 'Starting...' : (gameActive && !gameOver ? 'Cash Out' : 'Start Game')}
+                      </span>
+                    </button>
+                  </div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row">
@@ -1512,7 +1605,18 @@ function GameApp() {
                   </div>
                   {/* Desktop Controls */}
                   <div className="game-footer-desktop">
-                  <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn" onClick={startGame} disabled={isLoading}><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">{isLoading ? 'Starting...' : 'Start Game'}</span></button></div>
+                  <div className="footer-btn-wrap min-w-140">
+                    <button 
+                      className="footer-big-btn" 
+                      onClick={gameActive && !gameOver ? cashOut : startGame} 
+                      disabled={isLoading}
+                    >
+                      <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
+                      <span className="footer-big-btn-text">
+                        {isLoading ? 'Starting...' : (gameActive && !gameOver ? 'Cash Out' : 'Start Game')}
+                      </span>
+                    </button>
+                  </div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row desktop">
