@@ -1586,7 +1586,7 @@ function GameApp() {
                     <div className="footer-section">
                       <span className="footer-label">Bet Amount</span>
                       {/* Bet Amount Input (Mobile) */}
-                      <div className="footer-bet-input-container" style={{justifyContent: 'center', alignItems: 'center', display: 'flex'}}>
+                      <div className="footer-bet-input-container" style={{justifyContent: 'center', alignItems: 'center', display: 'flex', position: 'relative'}}>
                         <input
                           type="number"
                           value={betAmount}
@@ -1596,9 +1596,9 @@ function GameApp() {
                           max="1000"
                           step="1"
                           disabled={gameActive || isLoading || isDying || animating.current}
-                          style={{margin: '0 auto', display: 'block'}}
+                          style={{margin: '0 auto', display: 'block', paddingLeft: '20px'}}
                         />
-                        <span className="footer-bet-input-symbol">$</span>
+                        <span className="footer-bet-input-symbol" style={{position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none'}}>$</span>
                       </div>
                       <div className="footer-btn-row" style={{justifyContent: 'center', marginTop: 4}}>
                         <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
@@ -1609,7 +1609,7 @@ function GameApp() {
                     </div>
                   </div>
                   {/* Desktop Controls */}
-                  <div className="game-footer-desktop" style={{gap: 32, alignItems: 'center', justifyContent: 'center', width: '100%', display: 'flex'}}>
+                  <div className="game-footer-desktop" style={{gap: 32, alignItems: 'flex-end', justifyContent: 'center', width: '100%', display: 'flex'}}>
                     <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', width: 'auto'}}>
                       <button 
                         className="footer-big-btn" 
