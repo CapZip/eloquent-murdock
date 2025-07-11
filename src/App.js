@@ -363,52 +363,52 @@ function GameApp() {
           });
           
                   if (result.willDie) {
-          // Player dies
-          setIsDying(true);
-          animating.current = true;
-          
-          // Spawn appropriate death animation based on terrain
-          if (board[CENTER_LANE][newPosition].type === "road") {
-            // Car for road deaths
-            setCarPositions(prev => [
-              ...prev.filter(car => !(car.lane === 0 && car.col === newPosition)),
-              { lane: 0, col: newPosition, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
-            ]);
-          } else if (board[CENTER_LANE][newPosition].type === "grass" || 
-                     (board[CENTER_LANE][newPosition].type === "pavement" && newPosition === 15)) {
-            // Eagle for grass deaths and final sidewalk death - flies across entire board
-            const eagleStartCol = Math.max(0, newPosition - 3);
-            setEaglePositions(prev => [...prev, {
-              lane: CENTER_LANE, // Player's lane
-              col: eagleStartCol, // Start closer to the player
-              x: eagleStartCol - 2 // Start off-screen to the left of eagleStartCol
-            }]);
-          } else {
-            // Brick/obstacle for other terrain (no road block placement here)
-          }
-          
-          // Start death animation
-          let deathStartTime = null;
-          let deathAnimationId = null;
-          const animateDeath = (timestamp) => {
-            if (!deathStartTime) deathStartTime = timestamp;
-            const elapsed = timestamp - deathStartTime;
-            const frameTime = 60; // 60ms per frame for smoother death
-            const currentFrame = Math.floor(elapsed / frameTime);
-            chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
-            if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
-              deathAnimationId = requestAnimationFrame(animateDeath);
+            animating.current = true; // Lock movement immediately when doomed (like old script)
+            // Player will die - spawn death animation but DON'T start death animation yet
+            // The death animation will start when car/eagle actually hits the chicken
+            if (board[CENTER_LANE][newPosition].type === "road") {
+              // Car for road deaths - spawn car that will trigger death when it hits
+              setCarPositions(prev => [
+                ...prev.filter(car => !(car.lane === 0 && car.col === newPosition)),
+                { lane: 0, col: newPosition, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
+              ]);
+            } else if (board[CENTER_LANE][newPosition].type === "grass" || 
+                       (board[CENTER_LANE][newPosition].type === "pavement" && newPosition === 15)) {
+              // Eagle for grass deaths - spawn eagle that will trigger death when it hits
+              const eagleStartCol = Math.max(0, newPosition - 3);
+              setEaglePositions(prev => [...prev, {
+                lane: CENTER_LANE, // Player's lane
+                col: eagleStartCol, // Start closer to the player
+                x: eagleStartCol - 2 // Start off-screen to the left of eagleStartCol
+              }]);
             } else {
-              chickenAnimRef.current.frame = 31; // Stay on last death frame
-              setGameOver(true);
-              setIsDying(false); // Reset dying state so modal shows
-              setStreak(0); // Reset streak on death
-              setCurrentWinnings(betAmount); // Reset winnings on death
-              setCurrentMultiplier(1.0); // Reset multiplier on death
-              animating.current = false; // Reset animating flag
+              // For other terrain, trigger death immediately (like old version)
+              setIsDying(true);
+              animating.current = true;
+              
+              // Start death animation with requestAnimationFrame
+              let deathStartTime = null;
+              let deathAnimationId = null;
+              const animateDeath = (timestamp) => {
+                if (!deathStartTime) deathStartTime = timestamp;
+                const elapsed = timestamp - deathStartTime;
+                const frameTime = 60; // 60ms per frame for smoother death
+                const currentFrame = Math.floor(elapsed / frameTime);
+                chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
+                if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
+                  deathAnimationId = requestAnimationFrame(animateDeath);
+                } else {
+                  chickenAnimRef.current.frame = 31; // Stay on last death frame
+                  setGameOver(true);
+                  setIsDying(false); // Reset dying state so modal shows
+                  setStreak(0); // Reset streak on death
+                  setCurrentWinnings(betAmount); // Reset winnings on death
+                  setCurrentMultiplier(1.0); // Reset multiplier on death
+                  animating.current = false; // Reset animating flag
+                }
+              };
+              deathAnimationId = requestAnimationFrame(animateDeath);
             }
-          };
-          deathAnimationId = requestAnimationFrame(animateDeath);
           } else {
             // Player survived! Place road block if on road
             if (board[CENTER_LANE][newPosition].type === "road") {
@@ -559,7 +559,7 @@ function GameApp() {
           if (Math.abs(newY - CENTER_LANE) < 0.5 && !isDying && !gameOver) {
             setIsDying(true);
             animating.current = true;
-            // Start death animation with requestAnimationFrame
+            // Start death animation with requestAnimationFrame (like old version)
             let deathStartTime = null;
             let deathAnimationId = null;
             const animateDeath = (timestamp) => {
@@ -595,7 +595,7 @@ function GameApp() {
           if (Math.abs(newX - player.col) < 0.5 && !isDying && !gameOver) {
             setIsDying(true);
             animating.current = true;
-            // Start death animation with requestAnimationFrame
+            // Start death animation with requestAnimationFrame (like old version)
             let deathStartTime = null;
             let deathAnimationId = null;
             const animateDeath = (timestamp) => {
@@ -1509,7 +1509,7 @@ function GameApp() {
                   />
                   <div className="streak-multiplier-values">
                     <div className="streak-multiplier-mult">
-                      {currentMultiplier.toFixed(1)}x
+                      {DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2)}x
                     </div>
                     <div className="streak-multiplier-bet">
                       Bet: ${betAmount}
@@ -1540,7 +1540,7 @@ function GameApp() {
                 className="streak-multiplier-chicken-mobile"
               />
               <div className="streak-multiplier-values-mobile">
-                <div className="streak-multiplier-mult-mobile">{currentMultiplier.toFixed(1)}x</div>
+                <div className="streak-multiplier-mult-mobile">{DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2)}x</div>
                 <div className="streak-multiplier-winnings-mobile">${currentWinnings}</div>
                 <div className="streak-multiplier-streak-row-mobile">
                   <span className="streak-multiplier-streak-count-mobile">{streak}</span>
