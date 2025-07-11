@@ -1531,7 +1531,7 @@ function GameApp() {
                   />
                   <div className="streak-multiplier-values">
                     <div className="streak-multiplier-mult">
-                      {DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2)}x
+                      {streak === 0 ? '1.00x' : DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2) + 'x'}
                     </div>
                     <div className="streak-multiplier-bet">
                       Bet: ${betAmount}
@@ -1562,7 +1562,7 @@ function GameApp() {
                 className="streak-multiplier-chicken-mobile"
               />
               <div className="streak-multiplier-values-mobile">
-                <div className="streak-multiplier-mult-mobile">{DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2)}x</div>
+                <div className="streak-multiplier-mult-mobile">{streak === 0 ? '1.00x' : DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2) + 'x'}</div>
                 <div className="streak-multiplier-winnings-mobile">${currentWinnings}</div>
                 <div className="streak-multiplier-streak-row-mobile">
                   <span className="streak-multiplier-streak-count-mobile">{streak}</span>
