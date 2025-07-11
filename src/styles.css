@@ -5,6 +5,82 @@
   font-style: normal;
 }
 
+/* SweetAlert2 custom styling */
+.swal2-popup {
+  font-family: 'Minecraft', sans-serif !important;
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 2px solid #333 !important;
+}
+
+.swal2-title {
+  font-family: 'Minecraft', sans-serif !important;
+  color: #ffffff !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+}
+
+.swal2-content {
+  font-family: 'Minecraft', sans-serif !important;
+  color: #cccccc !important;
+  font-size: 16px !important;
+}
+
+.swal2-confirm {
+  font-family: 'Minecraft', sans-serif !important;
+  background: linear-gradient(90deg, #a259ff, #f246a9) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  padding: 12px 24px !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.swal2-confirm:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 2px 8px #a259ff44 !important;
+}
+
+.swal2-cancel {
+  font-family: 'Minecraft', sans-serif !important;
+  background: #333 !important;
+  border: 2px solid #555 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  padding: 12px 24px !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.swal2-cancel:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 2px 8px #333 !important;
+}
+
+.swal2-icon {
+  border-color: #a259ff !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #ff4444 !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #ff4444 !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #44ff44 !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-circular-line'],
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #44ff44 !important;
+}
+
 body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span {
   font-family: 'Minecraft', sans-serif !important;
   padding: 0;
@@ -39,8 +115,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
 
 /* Make dying chicken slightly bigger to match alive chicken */
 .chicken-sprite[src*="Chicken Dead V2"] {
-  width: 140px !important;
-  height: 140px !important;
+  width: 110px !important;
+  height: 110px !important;
 }
 
 @media (max-width: 768px) {
@@ -51,8 +127,8 @@ body, .pixel-font, .game-board, button, input, h1, h2, h3, h4, h5, h6, div, span
   }
   
   .chicken-sprite[src*="Chicken Dead V2"] {
-    width: 110px !important;
-    height: 110px !important;
+    width: 90px !important;
+    height: 90px !important;
   }
 }
 
@@ -317,6 +393,16 @@ button:disabled {
 }
 .footer-big-btn:hover {
   filter: brightness(1.1);
+}
+
+.footer-big-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: brightness(0.8);
+}
+
+.footer-big-btn:disabled:hover {
+  filter: brightness(0.8);
 }
 .footer-big-btn-bg {
   position: absolute;

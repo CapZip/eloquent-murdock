@@ -6,6 +6,9 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { clusterApiUrl } from '@solana/web3.js';
+import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound } from './services/gameService';
+import { useWallet } from '@solana/wallet-adapter-react';
+import Swal from 'sweetalert2';
 
 const LANES = 7;
 const COL_WIDTH = 140;
@@ -54,11 +57,6 @@ const COLUMN_TYPES = [
   "grass", "grass", "grass", "grass" // 16-19 (after finish)
 ];
 const FINAL_COL = 15; // The actual finish column (pavement)
-
-// Generate hash-based difficulty (10-25)
-function generateHash() {
-  return Math.floor(Math.random() * 16) + 10; // 10 to 25
-}
 
 // Preload all chicken frames for faster loading
 const CHICKEN_FRAMES = Array.from({ length: 26 }, (_, i) =>
@@ -189,7 +187,8 @@ const CAR_SPEEDS = {
 
 const EAGLE_SPEED = window.innerWidth <= 768 ? 0.05 * 1.3 : 0.05; // 30% faster on mobile
 
-export default function App() {
+function GameApp() {
+  const { publicKey, signTransaction } = useWallet();
   const [difficulty, setDifficulty] = useState('medium');
   const [board, setBoard] = useState(makeBoard());
   const [player, setPlayer] = useState({ lane: CENTER_LANE, col: 4 }); // start on pavement
@@ -197,8 +196,11 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const [win, setWin] = useState(false);
   const [cashedOut, setCashedOut] = useState(false);
-  const [hash, setHash] = useState(generateHash());
+  const [hash, setHash] = useState(null); // Will be set by server
   const [animCol, setAnimCol] = useState(4);
+  
+  // Performance optimization: Cache server responses
+  const responseCache = useRef(new Map());
   const animating = useRef(false);
   const [carPositions, setCarPositions] = useState(() => makeCars(board)); // { lane, col, y }
   const [eaglePositions, setEaglePositions] = useState([]); // { lane, col, x }
@@ -212,6 +214,12 @@ export default function App() {
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   const [selectorFrame, setSelectorFrame] = useState(0);
   const [selectedToken, setSelectedToken] = useState("SOLANA");
+  
+  // Server-side game state
+  const [gameId, setGameId] = useState(null);
+  const [gameActive, setGameActive] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState(4);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Drag state variables
   const [isDragging, setIsDragging] = useState(false);
@@ -233,10 +241,238 @@ export default function App() {
     { label: "POPCAT", value: "POPCAT", icon: "🐱" },
     { label: "SOLANA", value: "SOLANA", icon: <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 18, height: 18, verticalAlign: 'middle' }} /> }
   ];
-  
-  const endpoint = clusterApiUrl('mainnet-beta');
-  const wallets = [new PhantomWalletAdapter()];
-  
+
+  // Start game function using server
+  const startGame = async () => {
+    if (gameActive || isLoading) return;
+    
+    // Require wallet connection for all games (including demo)
+    if (!publicKey) {
+      Swal.fire({
+        title: 'Wallet Required',
+        text: 'Please connect your wallet to play!',
+        icon: 'warning',
+        confirmButtonText: 'Connect Wallet'
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const isDemo = betAmount === 0;
+      const wallet = { publicKey, signTransaction };
+      
+      const result = await startGameRound(betAmount, difficulty, wallet);
+      
+      if (result.success) {
+        setGameId(result.gameId);
+        setGameActive(true);
+        setGameOver(false);
+        setWin(false);
+        setCashedOut(false);
+        setPlayer({ lane: CENTER_LANE, col: 4 });
+        setCurrentPosition(4);
+        setScore(0);
+        setStreak(0);
+        setCurrentWinnings(betAmount);
+        setCurrentMultiplier(1.0);
+        setIsDying(false);
+        setCarPositions([]);
+        setEaglePositions([]);
+        setClaimedCoins([]);
+        setRoadBlocks([]);
+        setBackgroundCars([]);
+        chickenAnimRef.current = { col: 4, frame: 3 };
+        animating.current = false;
+        
+        // Reset board for new game
+        setBoard(makeBoard());
+      }
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      Swal.fire({
+        title: 'Game Start Failed',
+        text: error.message || 'Failed to start game. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Check next move using server
+  const checkNextMove = async () => {
+    if (!gameActive || !gameId || isLoading || animating.current) return;
+    
+    animating.current = true;
+    setIsLoading(true);
+    
+    // IMMEDIATE FEEDBACK - Start animation right away
+    const nextPosition = currentPosition + 1;
+    setCurrentPosition(nextPosition);
+    setPlayer({ lane: CENTER_LANE, col: nextPosition });
+    chickenAnimRef.current.col = nextPosition;
+    
+    // Start walking animation immediately
+    let frameIndex = 0;
+    const walkInterval = setInterval(() => {
+      chickenAnimRef.current.frame = frameIndex % 26;
+      frameIndex++;
+    }, 50);
+    
+    try {
+      const walletAddress = publicKey.toString();
+      const result = await checkNextMoveServer(gameId, currentPosition, walletAddress);
+      
+      if (result.success) {
+        const newPosition = result.nextPosition;
+        
+        // SERVER CONFIRMATION - Adjust if needed
+        if (newPosition !== nextPosition) {
+          setCurrentPosition(newPosition);
+          setPlayer({ lane: CENTER_LANE, col: newPosition });
+          chickenAnimRef.current.col = newPosition;
+        }
+        
+        // Reset camera to center on chicken when moving
+        setManualScrollOffset(0);
+        setHasManualPosition(false);
+        
+        // End animation after transition duration
+        setTimeout(() => {
+          clearInterval(walkInterval);
+          chickenAnimRef.current.frame = 3; // Back to idle
+          animating.current = false;
+          
+          // Update score and streak
+          setScore(prev => prev + 1);
+          setStreak(prev => prev + 1);
+          
+          // Update multiplier and winnings
+          const newMultiplier = 1 + (streak * 0.1);
+          setCurrentMultiplier(newMultiplier);
+          setCurrentWinnings(betAmount * newMultiplier);
+          
+                  if (result.willDie) {
+          // Player dies
+          setIsDying(true);
+          animating.current = true;
+          
+          // Spawn appropriate death animation based on terrain
+          if (board[CENTER_LANE][newPosition].type === "road") {
+            // Car for road deaths
+            setCarPositions(prev => [
+              ...prev.filter(car => !(car.lane === 0 && car.col === newPosition)),
+              { lane: 0, col: newPosition, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
+            ]);
+          } else if (board[CENTER_LANE][newPosition].type === "grass") {
+            // Eagle for grass deaths - flies across entire board
+            const eagleStartCol = Math.max(0, newPosition - 3);
+            setEaglePositions(prev => [...prev, {
+              lane: CENTER_LANE, // Player's lane
+              col: eagleStartCol, // Start closer to the player
+              x: eagleStartCol - 2 // Start off-screen to the left of eagleStartCol
+            }]);
+          } else {
+            // Brick/obstacle for other terrain (no road block placement here)
+          }
+          
+          // Start death animation
+          let deathStartTime = null;
+          let deathAnimationId = null;
+          const animateDeath = (timestamp) => {
+            if (!deathStartTime) deathStartTime = timestamp;
+            const elapsed = timestamp - deathStartTime;
+            const frameTime = 60;
+            const currentFrame = Math.floor(elapsed / frameTime);
+            chickenAnimRef.current.frame = Math.min(currentFrame, 31);
+            if (elapsed < 1920) {
+              deathAnimationId = requestAnimationFrame(animateDeath);
+            } else {
+              chickenAnimRef.current.frame = 31;
+              setGameOver(true);
+              setStreak(0);
+              setCurrentWinnings(betAmount);
+              setCurrentMultiplier(1.0);
+              setGameActive(false);
+              animating.current = false;
+              
+              // End game on server
+              const walletAddress = publicKey.toString();
+              endGameRound(gameId, newPosition, walletAddress).catch(error => {
+                console.error('Failed to end game:', error);
+              });
+            }
+          };
+          deathAnimationId = requestAnimationFrame(animateDeath);
+          } else {
+            // Player survived! Place road block if on road
+            if (board[CENTER_LANE][newPosition].type === "road") {
+              setRoadBlocks(prev => [...prev, { col: newPosition, lane: CENTER_LANE }]);
+            }
+          }
+          
+          if (newPosition >= 15) {
+            // Player wins
+            setWin(true);
+            setGameActive(false);
+            
+            // End game on server
+            const walletAddress = publicKey.toString();
+            endGameRound(gameId, newPosition, walletAddress).then(endResult => {
+              if (endResult.success) {
+                setCurrentWinnings(endResult.winnings);
+                setCurrentMultiplier(endResult.multiplier);
+              }
+            }).catch(error => {
+              console.error('Failed to end game:', error);
+            });
+          }
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Failed to check move:', error);
+      Swal.fire({
+        title: 'Move Failed',
+        text: error.message || 'Failed to check move. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+      animating.current = false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Cash out function
+  const cashOut = async () => {
+    if (!gameActive || !gameId || isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const walletAddress = publicKey.toString();
+      const result = await endGameRound(gameId, currentPosition, walletAddress);
+      
+      if (result.success) {
+        setCashedOut(true);
+        setGameActive(false);
+        setCurrentWinnings(result.winnings);
+        setCurrentMultiplier(result.multiplier);
+      }
+    } catch (error) {
+      console.error('Failed to cash out:', error);
+      Swal.fire({
+        title: 'Cash Out Failed',
+        text: error.message || 'Failed to cash out. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Preload all images on mount
   useEffect(() => {
     preloadImages(() => {
@@ -474,10 +710,15 @@ export default function App() {
   // Handle keyboard and touch controls
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === "KeyC" && !gameOver && !win && !cashedOut && player.col > 4) {
+      if (e.code === "Space" && gameActive && !isLoading && !isDying) {
+        e.preventDefault();
+        if (!spaceHeld.current) {
+          spaceHeld.current = true;
+          checkNextMove();
+        }
+      } else if (e.code === "KeyC" && gameActive && !gameOver && !win && !cashedOut && player.col > 4) {
         // Cashout
-        setCashedOut(true);
-        setScore(prev => prev * (1 + (player.col - 4) * 0.5)); // Bonus based on progress
+        cashOut();
       }
     };
     const handleKeyUp = (e) => {
@@ -491,7 +732,7 @@ export default function App() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [player, animating, gameOver, win, cashedOut]);
+  }, [player, animating, gameOver, win, cashedOut, gameActive, isLoading, isDying]);
 
   // Drag event handlers for draggable game board
   const handlePointerDown = (e) => {
@@ -580,115 +821,11 @@ export default function App() {
     }
   };
 
-  // Animate chicken movement
+  // Animate chicken movement (now handled by server)
   const moveChicken = () => {
-    if (animating.current) return;
-    if (isDying) return;
-    if (player.col >= FINAL_COL) return;
-    animating.current = true;
-    
-    const endCol = Math.min(player.col + 1, FINAL_COL);
-    
-    // Update player position immediately
-    setPlayer((prev) => {
-      if (prev.col === FINAL_COL) return prev;
-      return { ...prev, col: endCol };
-    });
-    
-    // Update streak and multiplier
-    const newStreak = streak + 1;
-    setStreak(newStreak);
-    
-    // Calculate current multiplier based on difficulty and streak
-    const multiplierIndex = Math.min(newStreak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1);
-    const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
-    setCurrentMultiplier(newMultiplier);
-    
-    // Update current winnings
-    setCurrentWinnings(betAmount * newMultiplier);
-    
-    // Reset camera to center on chicken when moving
-    setManualScrollOffset(0); // Reset to automatic camera mode
-    setHasManualPosition(false); // Reset manual mode
-    
-    // Start walking animation
-    chickenAnimRef.current.col = endCol;
-    let frameIndex = 0;
-    const walkInterval = setInterval(() => {
-      chickenAnimRef.current.frame = frameIndex % 26;
-      frameIndex++;
-    }, 50);
-    
-    // End animation after transition duration
-    setTimeout(() => {
-      clearInterval(walkInterval);
-      chickenAnimRef.current.frame = 3; // Back to idle
-      animating.current = false;
-      
-      // Hash-based danger check AFTER movement animation completes
-      if (endCol >= 4 && endCol < FINAL_COL) {
-        const dangerThreshold = hash / 100; // base danger
-        const progressMultiplier = (endCol - 4) / (FINAL_COL - 4); // progress
-        const finalDanger = dangerThreshold * (1 + progressMultiplier * 1.2); // steeper scaling
-        
-        console.log(`Hash: ${hash}, Col: ${endCol}, Danger: ${(finalDanger * 100).toFixed(2)}%`);
-        
-        if (Math.random() < finalDanger) {
-          // Player is doomed - prevent any further movement
-          animating.current = true; // Lock movement
-          
-          // Spawn appropriate death animation based on terrain
-          if (board[CENTER_LANE][endCol].type === "road") {
-            // Car for road deaths
-            setCarPositions(prev => [
-              ...prev.filter(car => !(car.lane === 0 && car.col === endCol)),
-              { lane: 0, col: endCol, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
-            ]);
-          } else if (board[CENTER_LANE][endCol].type === "grass") {
-            // Eagle for grass deaths - flies across entire board
-            const eagleStartCol = Math.max(0, endCol - 3);
-            setEaglePositions(prev => [...prev, {
-              lane: CENTER_LANE, // Player's lane
-              col: eagleStartCol, // Start closer to the player
-              x: eagleStartCol - 2 // Start off-screen to the left of eagleStartCol
-            }]);
-          } else {
-            // If not on road or grass, trigger death immediately
-            setIsDying(true);
-            
-            // Start death animation with requestAnimationFrame
-            let deathStartTime = null;
-            let deathAnimationId = null;
-            
-            const animateDeath = (timestamp) => {
-              if (!deathStartTime) deathStartTime = timestamp;
-              const elapsed = timestamp - deathStartTime;
-              const frameTime = 60; // 60ms per frame for smoother death
-              
-              const currentFrame = Math.floor(elapsed / frameTime);
-              chickenAnimRef.current.frame = Math.min(currentFrame, 31); // Cap at frame 31
-              
-              if (elapsed < 1920) { // 32 frames * 60ms = 1920ms
-                deathAnimationId = requestAnimationFrame(animateDeath);
-              } else {
-                chickenAnimRef.current.frame = 31; // Stay on last death frame
-                setGameOver(true);
-                setStreak(0); // Reset streak on death
-                setCurrentWinnings(betAmount); // Reset winnings on death
-                setCurrentMultiplier(1.0); // Reset multiplier on death
-                animating.current = false; // Reset animating flag
-              }
-            };
-            deathAnimationId = requestAnimationFrame(animateDeath);
-          }
-        } else {
-          // Chicken survived! Place road block if on road
-          if (board[CENTER_LANE][endCol].type === "road") {
-            setRoadBlocks(prev => [...prev, { col: endCol, lane: CENTER_LANE }]);
-          }
-        }
-      }
-    }, 300);
+    // This function is now deprecated - movement is handled by checkNextMove()
+    // Keeping for compatibility but it should not be called directly
+    console.warn('moveChicken() is deprecated - use checkNextMove() instead');
   };
 
   // Keep chickenAnimRef in sync with player.col (only when not animating)
@@ -815,10 +952,7 @@ export default function App() {
   }
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <div className="App">
+    <div className="App">
             {/* Game Header */}
             <div className="game-header">
               {/* Single row: title left, right side varies by device */}
@@ -1112,18 +1246,18 @@ export default function App() {
                           if (coinTapGuard.current) return;
                           coinTapGuard.current = true;
                           setTimeout(() => { coinTapGuard.current = false; }, 500);
-                          if (c === player.col + 1 && !animating.current && !gameOver && !win && !cashedOut && !isDying) {
-                            moveChicken();
+                          if (c === player.col + 1 && !animating.current && !gameOver && !win && !cashedOut && !isDying && gameActive) {
+                            checkNextMove();
                           }
                         }}
                         onTouchStart={e => {
-                          e.preventDefault(); // Prevents iOS Safari from firing both touch and click events (double-action bug)
+                          // Remove preventDefault to avoid passive event listener error
                           if (coinTapGuard.current) return;
                           coinTapGuard.current = true;
                           setTimeout(() => { coinTapGuard.current = false; }, 500);
                           if (c !== player.col + 1) return;
-                          if (!animating.current && !gameOver && !win && !cashedOut && !isDying) {
-                            moveChicken();
+                          if (!animating.current && !gameOver && !win && !cashedOut && !isDying && gameActive) {
+                            checkNextMove();
                           }
                         }}
                         className={c === player.col + 1 ? "next-claimable-coin" : undefined}
@@ -1344,7 +1478,7 @@ export default function App() {
                 <div className="game-footer-flex">
                   {/* Mobile Controls */}
                   <div className="game-footer-mobile">
-                  <div className="footer-btn-wrap w-full"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+                  <div className="footer-btn-wrap w-full"><button className="footer-big-btn" onClick={startGame} disabled={isLoading}><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">{isLoading ? 'Starting...' : 'Start Game'}</span></button></div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row">
@@ -1378,7 +1512,7 @@ export default function App() {
                   </div>
                   {/* Desktop Controls */}
                   <div className="game-footer-desktop">
-                  <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn"><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">Start Game</span></button></div>
+                  <div className="footer-btn-wrap min-w-140"><button className="footer-big-btn" onClick={startGame} disabled={isLoading}><img src="/game/UI/Big Button.png" alt="" className="footer-big-btn-bg" /><span className="footer-big-btn-text">{isLoading ? 'Starting...' : 'Start Game'}</span></button></div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
                       <div className="footer-btn-row desktop">
@@ -1417,6 +1551,18 @@ export default function App() {
               </div>
             </div>
           </div>
+        );
+}
+
+export default function App() {
+  const endpoint = clusterApiUrl('mainnet-beta');
+  const wallets = [new PhantomWalletAdapter()];
+  
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <GameApp />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
