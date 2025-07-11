@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import "./styles.css";
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -506,11 +506,16 @@ function GameApp() {
     });
   }, []);
 
-  // Simple animation loop for smooth frame updates
+  // Optimized animation loop - only update when needed
   useEffect(() => {
     let animationId;
-    const animate = () => {
-      setForceRerender(f => f + 1);
+    let lastUpdate = 0;
+    const animate = (timestamp) => {
+      // Only update every 16ms (60fps) for smooth animations
+      if (timestamp - lastUpdate >= 16) {
+        setForceRerender(f => f + 1);
+        lastUpdate = timestamp;
+      }
       animationId = requestAnimationFrame(animate);
     };
     animationId = requestAnimationFrame(animate);
@@ -518,55 +523,59 @@ function GameApp() {
     return () => cancelAnimationFrame(animationId);
   }, []);
 
-  // Calculate first visible column for centering
-  let firstVisibleCol;
-  const halfVisible = Math.floor(visibleCols / 2);
-  
-  // Use manual drag offset if dragging, otherwise use automatic camera
-  let finalScrollOffset;
-  let finalCameraYOffset;
-  
-  if (isDragging || hasManualPosition) {
-    // Use manual drag offsets directly without any interference
-    finalScrollOffset = manualScrollOffset;
-    finalCameraYOffset = manualCameraYOffset;
-    // Calculate firstVisibleCol from manual offset for positioning calculations
-    firstVisibleCol = Math.round(-manualScrollOffset / COL_WIDTH);
-  } else {
-    // Use automatic camera logic
-    if (window.innerWidth <= 768) {
-      const progress = player.col - PAVEMENT_START_COL;
-      if (player.col === PAVEMENT_START_COL) {
-        firstVisibleCol = player.col; // Chicken on the left
-      } else if (progress % 2 === 0) {
-        firstVisibleCol = player.col - 1; // Chicken centered
-      } else {
-        firstVisibleCol = player.col; // Chicken on the left, camera jumps
-      }
-      if (firstVisibleCol > board[0].length - visibleCols) {
-        firstVisibleCol = board[0].length - visibleCols; // Clamp to end
-      }
-    } else {
-      firstVisibleCol = Math.max(0, player.col - halfVisible);
-    }
-    finalScrollOffset = -firstVisibleCol * COL_WIDTH;
+  // Calculate first visible column for centering (memoized)
+  const { firstVisibleCol, finalScrollOffset, finalCameraYOffset } = useMemo(() => {
+    let firstVisibleCol;
+    const halfVisible = Math.floor(visibleCols / 2);
     
-    // Calculate vertical camera offset for mobile
-    finalCameraYOffset = 0;
-    if (window.innerWidth <= 768) {
-      const boardHeight = 800;
-      const laneHeight = boardHeight / LANES;
-      const boardPixelHeight = boardHeight;
-      const containerHeight = boardHeight; // .game-board height
-      const chickenY = CENTER_LANE * laneHeight + laneHeight / 2;
-      const centerY = containerHeight / 2;
-      let desiredOffset = centerY - chickenY;
-      // Clamp so we don't scroll past the top or bottom
-      const maxOffset = 0;
-      const minOffset = containerHeight - boardPixelHeight;
-      finalCameraYOffset = Math.max(Math.min(desiredOffset, maxOffset), minOffset);
+    // Use manual drag offset if dragging, otherwise use automatic camera
+    let finalScrollOffset;
+    let finalCameraYOffset;
+    
+    if (isDragging || hasManualPosition) {
+      // Use manual drag offsets directly without any interference
+      finalScrollOffset = manualScrollOffset;
+      finalCameraYOffset = manualCameraYOffset;
+      // Calculate firstVisibleCol from manual offset for positioning calculations
+      firstVisibleCol = Math.round(-manualScrollOffset / COL_WIDTH);
+    } else {
+      // Use automatic camera logic
+      if (window.innerWidth <= 768) {
+        const progress = player.col - PAVEMENT_START_COL;
+        if (player.col === PAVEMENT_START_COL) {
+          firstVisibleCol = player.col; // Chicken on the left
+        } else if (progress % 2 === 0) {
+          firstVisibleCol = player.col - 1; // Chicken centered
+        } else {
+          firstVisibleCol = player.col; // Chicken on the left, camera jumps
+        }
+        if (firstVisibleCol > board[0].length - visibleCols) {
+          firstVisibleCol = board[0].length - visibleCols; // Clamp to end
+        }
+      } else {
+        firstVisibleCol = Math.max(0, player.col - halfVisible);
+      }
+      finalScrollOffset = -firstVisibleCol * COL_WIDTH;
+      
+      // Calculate vertical camera offset for mobile
+      finalCameraYOffset = 0;
+      if (window.innerWidth <= 768) {
+        const boardHeight = 800;
+        const laneHeight = boardHeight / LANES;
+        const boardPixelHeight = boardHeight;
+        const containerHeight = boardHeight; // .game-board height
+        const chickenY = CENTER_LANE * laneHeight + laneHeight / 2;
+        const centerY = containerHeight / 2;
+        let desiredOffset = centerY - chickenY;
+        // Clamp so we don't scroll past the top or bottom
+        const maxOffset = 0;
+        const minOffset = containerHeight - boardPixelHeight;
+        finalCameraYOffset = Math.max(Math.min(desiredOffset, maxOffset), minOffset);
+      }
     }
-  }
+    
+    return { firstVisibleCol, finalScrollOffset, finalCameraYOffset };
+  }, [isDragging, hasManualPosition, manualScrollOffset, manualCameraYOffset, player.col, visibleCols, board]);
 
   // Combined car and eagle animation loop
   useEffect(() => {
@@ -709,7 +718,7 @@ function GameApp() {
           }]);
         }
       }
-    }, 800 + Math.random() * 800); // Randomize spawn interval between 0.8-1.6 seconds
+    }, 1000 + Math.random() * 1000); // Randomize spawn interval between 1.0-2.0 seconds (reduced frequency)
     
     // Animate background cars moving down
     let frame;
@@ -887,16 +896,19 @@ function GameApp() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Collect all tree/bush decorations for the board
-  const allDecos = [];
-  for (let l = 0; l < board.length; l++) {
-    for (let c = 0; c < board[l].length; c++) {
-      const deco = board[l][c].deco;
-      if (deco) {
-        allDecos.push({ ...deco, lane: l, col: c });
+  // Collect all tree/bush decorations for the board (memoized)
+  const allDecos = useMemo(() => {
+    const decos = [];
+    for (let l = 0; l < board.length; l++) {
+      for (let c = 0; c < board[l].length; c++) {
+        const deco = board[l][c].deco;
+        if (deco) {
+          decos.push({ ...deco, lane: l, col: c });
+        }
       }
     }
-  }
+    return decos;
+  }, [board]);
 
   // Selector frame pulsing effect
   useEffect(() => {
@@ -925,18 +937,18 @@ function GameApp() {
   const [betFraction, setBetFraction] = useState("MAX");
 
   // Difficulty button handlers
-  const handleDifficultyChange = (newDifficulty) => {
+  const handleDifficultyChange = useCallback((newDifficulty) => {
     setDifficulty(newDifficulty);
-  };
+  }, []);
 
   // Bet amount handlers
-  const handleBetAmountChange = (e) => {
+  const handleBetAmountChange = useCallback((e) => {
     const value = parseFloat(e.target.value) || 0;
     setBetAmount(Math.max(0, value));
     setBetFraction("CUSTOM");
-  };
+  }, []);
   
-  const handleBetFractionClick = (fraction) => {
+  const handleBetFractionClick = useCallback((fraction) => {
     setBetFraction(fraction);
     let newAmount = betAmount; // Use current bet amount as base
     
@@ -958,7 +970,7 @@ function GameApp() {
     }
     
     setBetAmount(Math.max(1, newAmount));
-  };
+  }, [betAmount]);
 
   const coinTapGuard = useRef(false);
 
@@ -1494,7 +1506,7 @@ function GameApp() {
                 {eaglePositions.map((eagle, i) => (
                   <motion.img
                     key={`eagle-${i}`}
-                    src={EAGLE_FRAMES[Math.floor((Date.now() / 100) % 30)]}
+                    src={EAGLE_FRAMES[Math.floor((forceRerender / 6) % 30)]}
                     alt="eagle"
                     initial={{ scale: 1, opacity: 0, x: 0 }}
                     animate={{
