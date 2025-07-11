@@ -1581,16 +1581,18 @@ function GameApp() {
                   </div>
                     <div className="footer-section">
                       <span className="footer-label">Difficulty</span>
+                      {/* Difficulty Buttons (Mobile) */}
                       <div className="footer-btn-row">
-                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap flex-1"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
                       </div>
                     </div>
                     <div className="footer-section">
                       <span className="footer-label">Bet Amount</span>
-                      <div className="footer-bet-input-container">
+                      {/* Bet Amount Input (Mobile) */}
+                      <div className="footer-bet-input-container" style={{justifyContent: 'center', alignItems: 'center', display: 'flex'}}>
                         <input
                           type="number"
                           value={betAmount}
@@ -1599,44 +1601,48 @@ function GameApp() {
                           min="1"
                           max="1000"
                           step="1"
+                          disabled={gameActive || isLoading || isDying || animating.current}
+                          style={{margin: '0 auto', display: 'block'}}
                         />
                         <span className="footer-bet-input-symbol">$</span>
                       </div>
-                      <div className="footer-btn-row">
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                      <div className="footer-btn-row" style={{justifyContent: 'center', marginTop: 4}}>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
                       </div>
                     </div>
                   </div>
                   {/* Desktop Controls */}
-                  <div className="game-footer-desktop">
-                  <div className="footer-btn-wrap min-w-140">
-                    <button 
-                      className="footer-big-btn" 
-                      onClick={gameActive && !gameOver && !isDying && !animating.current ? cashOut : startGame} 
-                      disabled={isLoading || isDying || animating.current}
-                    >
-                      <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
-                      <span className="footer-big-btn-text">
-                        {isLoading ? 'Starting...' : (gameActive && !gameOver ? 'Cash Out' : 'Start Game')}
-                      </span>
-                    </button>
-                  </div>
-                    <div className="footer-section">
+                  <div className="game-footer-desktop" style={{gap: 32, alignItems: 'center', justifyContent: 'center', width: '100%', display: 'flex'}}>
+                    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', width: 'auto'}}>
+                      <button 
+                        className="footer-big-btn" 
+                        onClick={gameActive && !gameOver && !isDying && !animating.current ? cashOut : startGame} 
+                        disabled={isLoading || isDying || animating.current}
+                        style={{maxWidth: 220, width: 240}}
+                      >
+                        <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
+                        <span className="footer-big-btn-text">
+                          {isLoading ? 'Starting...' : (gameActive && !gameOver ? 'Cash Out' : 'Start Game')}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="footer-section" style={{minWidth: 180, margin: '0 12px'}}>
                       <span className="footer-label">Difficulty</span>
+                      {/* Difficulty Buttons (Desktop) */}
                       <div className="footer-btn-row desktop">
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
-                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'easy' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('easy')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'easy' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Easy</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'medium' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('medium')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'medium' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Medium</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'hard' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('hard')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'hard' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Hard</span></button></div>
+                        <div className="footer-btn-wrap"><button className={`footer-btn ${difficulty === 'daredevil' ? 'active' : 'inactive'}`} onClick={() => handleDifficultyChange('daredevil')} disabled={gameActive || isLoading || isDying || animating.current}><img src={difficulty === 'daredevil' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">Daredevil</span></button></div>
                       </div>
                     </div>
-                    <div className="footer-section bet-section">
+                    <div className="footer-section bet-section" style={{maxWidth: 320, margin: '0 12px', flex: 1}}>
                       <span className="footer-label">Bet Amount</span>
-                      <div className="footer-bet-row">
-                        <div className="footer-bet-input-container">
+                      <div className="footer-bet-row" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8}}>
+                        <div className="footer-bet-input-container" style={{margin: 0}}>
                           <input
                             type="number"
                             value={betAmount}
@@ -1645,18 +1651,19 @@ function GameApp() {
                             min="1"
                             max="1000"
                             step="1"
+                            disabled={gameActive || isLoading || isDying || animating.current}
+                            style={{marginRight: 0}}
                           />
                           <span className="footer-bet-input-symbol">$</span>
                         </div>
-                        <div className="footer-btn-row desktop">
-                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
-                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
-                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
-                          <div className="footer-btn-wrap"><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
+                        <div className="footer-btn-row desktop" style={{gap: 6, minWidth: 0}}>
+                          <div className="footer-btn-wrap" style={{maxWidth: 60}}><button className={`footer-btn ${betFraction === '1/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/4')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '1/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/4</span></button></div>
+                          <div className="footer-btn-wrap" style={{maxWidth: 60}}><button className={`footer-btn ${betFraction === '1/2' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('1/2')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '1/2' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">1/2</span></button></div>
+                          <div className="footer-btn-wrap" style={{maxWidth: 60}}><button className={`footer-btn ${betFraction === '3/4' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('3/4')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === '3/4' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">3/4</span></button></div>
+                          <div className="footer-btn-wrap" style={{maxWidth: 60}}><button className={`footer-btn ${betFraction === 'MAX' ? 'active' : 'inactive'}`} onClick={() => handleBetFractionClick('MAX')} disabled={gameActive || isLoading || isDying || animating.current}><img src={betFraction === 'MAX' ? "/game/UI/Small Button Active.png" : "/game/UI/Small Button - inactive.png"} alt="" className="footer-btn-bg" /><span className="footer-btn-text">MAX</span></button></div>
                         </div>
                       </div>
                     </div>
-      
                   </div>
                 </div>
               </div>

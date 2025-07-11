@@ -433,6 +433,7 @@ button:disabled {
   .game-footer-desktop {
     display: flex;
     flex-direction: row;
+    margin-top: 15px;
     gap: 24px;
     align-items: stretch;
     width: 100%;
@@ -1005,5 +1006,30 @@ button:disabled {
   .footer-bet-input-symbol {
     font-size: 18px;
     left: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-footer-desktop {
+    display: none !important;
+  }
+  .game-footer-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .footer-bet-input-container {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+  }
+  .footer-btn-row {
+    justify-content: center;
+    margin-top: 4px;
+  }
+}
+@media (min-width: 769px) {
+  .game-footer-mobile {
+    display: none !important;
   }
 }
