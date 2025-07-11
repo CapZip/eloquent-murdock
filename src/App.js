@@ -279,6 +279,7 @@ function GameApp() {
         setCurrentPosition(4);
         setScore(0);
         setStreak(0);
+        setFinalStreak(0);
         setCurrentWinnings(betAmount);
         setCurrentMultiplier(1.0);
         setIsDying(false);
@@ -352,12 +353,14 @@ function GameApp() {
           
           // Update score and streak
           setScore(prev => prev + 1);
-          setStreak(prev => prev + 1);
-          
-          // Update multiplier and winnings
-          const newMultiplier = 1 + (streak * 0.1);
-          setCurrentMultiplier(newMultiplier);
-          setCurrentWinnings(betAmount * newMultiplier);
+          setStreak(prev => {
+            const newStreak = prev + 1;
+            // Update multiplier and winnings with the new streak value
+            const newMultiplier = 1 + (newStreak * 0.1);
+            setCurrentMultiplier(newMultiplier);
+            setCurrentWinnings(betAmount * newMultiplier);
+            return newStreak;
+          });
           
                   if (result.willDie) {
           // Player dies
@@ -371,8 +374,9 @@ function GameApp() {
               ...prev.filter(car => !(car.lane === 0 && car.col === newPosition)),
               { lane: 0, col: newPosition, y: -1.1, carType: Math.floor(Math.random() * CARS.length) }
             ]);
-          } else if (board[CENTER_LANE][newPosition].type === "grass") {
-            // Eagle for grass deaths - flies across entire board
+          } else if (board[CENTER_LANE][newPosition].type === "grass" || 
+                     (board[CENTER_LANE][newPosition].type === "pavement" && newPosition === 15)) {
+            // Eagle for grass deaths and final sidewalk death - flies across entire board
             const eagleStartCol = Math.max(0, newPosition - 3);
             setEaglePositions(prev => [...prev, {
               lane: CENTER_LANE, // Player's lane
@@ -398,6 +402,8 @@ function GameApp() {
               chickenAnimRef.current.frame = 31;
               setGameOver(true);
               setIsDying(false); // Reset dying state so modal shows
+              // Store final streak before resetting
+              setFinalStreak(streak);
               setStreak(0);
               setCurrentWinnings(betAmount);
               setCurrentMultiplier(1.0);
@@ -452,7 +458,7 @@ function GameApp() {
 
   // Cash out function
   const cashOut = async () => {
-    if (!gameActive || !gameId || isLoading) return;
+    if (!gameActive || !gameId || isLoading || isDying || animating.current) return;
     
     setIsLoading(true);
     try {
@@ -720,7 +726,7 @@ function GameApp() {
           spaceHeld.current = true;
           checkNextMove();
         }
-      } else if (e.code === "KeyC" && gameActive && !gameOver && !win && !cashedOut && player.col > 4) {
+      } else if (e.code === "KeyC" && gameActive && !gameOver && !win && !cashedOut && player.col > 4 && !isDying && !animating.current) {
         // Cashout
         cashOut();
       }
@@ -736,7 +742,7 @@ function GameApp() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [player, animating, gameOver, win, cashedOut, gameActive, isLoading, isDying]);
+  }, [player, animating, gameOver, win, cashedOut, gameActive, isLoading, isDying, currentPosition]);
 
   // Drag event handlers for draggable game board
   const handlePointerDown = (e) => {
@@ -899,6 +905,7 @@ function GameApp() {
 
   // Streak and winnings tracking
   const [streak, setStreak] = useState(0);
+  const [finalStreak, setFinalStreak] = useState(0); // Store final streak for modal
   const [currentWinnings, setCurrentWinnings] = useState(8);
   const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
   const [betAmount, setBetAmount] = useState(8);
@@ -947,7 +954,7 @@ function GameApp() {
     if (gameOver && !isDying) {
       Swal.fire({
         title: 'Game Over!',
-        text: `You survived ${streak} moves and earned $${currentWinnings.toFixed(2)}`,
+        text: `You survived ${finalStreak} moves and earned $${currentWinnings.toFixed(2)}`,
         icon: 'error',
         confirmButtonText: 'Play Again',
         confirmButtonColor: '#3085d6',
@@ -1563,8 +1570,8 @@ function GameApp() {
                   <div className="footer-btn-wrap w-full">
                     <button 
                       className="footer-big-btn" 
-                      onClick={gameActive && !gameOver ? cashOut : startGame} 
-                      disabled={isLoading}
+                      onClick={gameActive && !gameOver && !isDying && !animating.current ? cashOut : startGame} 
+                      disabled={isLoading || isDying || animating.current}
                     >
                       <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
                       <span className="footer-big-btn-text">
@@ -1608,8 +1615,8 @@ function GameApp() {
                   <div className="footer-btn-wrap min-w-140">
                     <button 
                       className="footer-big-btn" 
-                      onClick={gameActive && !gameOver ? cashOut : startGame} 
-                      disabled={isLoading}
+                      onClick={gameActive && !gameOver && !isDying && !animating.current ? cashOut : startGame} 
+                      disabled={isLoading || isDying || animating.current}
                     >
                       <img src={gameActive && !gameOver ? "/game/cashout.png" : "/game/UI/Big Button.png"} alt="" className="footer-big-btn-bg" />
                       <span className="footer-big-btn-text">
