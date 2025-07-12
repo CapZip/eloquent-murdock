@@ -1,26 +1,23 @@
-import { functions } from '../firebase';
-import { httpsCallable } from 'firebase/functions';
-import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { WalletContextState } from '@solana/wallet-adapter-react';
-import Swal from 'sweetalert2';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import '../firebase'; // Initialize Firebase first
 
-// Fetch SOL price from CoinGecko API
-export const fetchSolPrice = async () => {
-  try {
-    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-    const data = await response.json();
-    return data.solana.usd;
-  } catch (error) {
-    console.error('Error fetching SOL price:', error);
-    return 100; // Fallback price
-  }
-};
+const functions = getFunctions();
+const LAMPORTS_PER_SOL = 1e9;
 
 // Calculate SOL amount from USD bet amount
-export const calculateSolAmount = async (usdAmount) => {
-  const solPrice = await fetchSolPrice();
-  return usdAmount / solPrice;
-};
+async function calculateSolAmount(usdAmount) {
+  try {
+    const getSolPrice = httpsCallable(functions, 'getSolPrice');
+    const result = await getSolPrice();
+    const solPrice = result.data.price;
+    return usdAmount / solPrice;
+  } catch (error) {
+    console.error('Error calculating SOL amount:', error);
+    // Fallback to approximate SOL price
+    return usdAmount / 100; // Approximate $100 per SOL
+  }
+}
 
 // Start a new game round
 export const startGameRound = async (betAmount, difficulty, wallet) => {
@@ -88,7 +85,7 @@ export const startGameRound = async (betAmount, difficulty, wallet) => {
       throw new Error('Transaction failed');
     }
 
-    // Call Firebase function to start round with transaction signature
+    // Start game round with confirmed transaction
     const startRound = httpsCallable(functions, 'startRound');
     const result = await startRound({ 
       betAmount, 
@@ -101,57 +98,110 @@ export const startGameRound = async (betAmount, difficulty, wallet) => {
     
     return result.data;
   } catch (error) {
-    console.error('Error starting game round:', error);
-    Swal.fire({
-      title: 'Game Start Error',
-      text: error.message || 'Failed to start game round.',
-      icon: 'error',
-      confirmButtonText: 'OK'
-    });
-    throw error;
+    console.error('Failed to start game round:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Failed to start game. Please try again.';
+    
+    if (error.message.includes('insufficient') || error.message.includes('balance')) {
+      userMessage = 'Insufficient balance. Please check your wallet.';
+    } else if (error.message.includes('rate limit') || error.message.includes('too many')) {
+      userMessage = 'Too many requests. Please wait a moment and try again.';
+    } else if (error.message.includes('network') || error.message.includes('connection')) {
+      userMessage = 'Network error. Please check your connection and try again.';
+    } else if (error.message.includes('signature') || error.message.includes('transaction')) {
+      userMessage = 'Transaction failed. Please try again.';
+    } else if (error.message.includes('wallet')) {
+      userMessage = 'Wallet not connected. Please connect your wallet.';
+    }
+    
+    throw new Error(userMessage);
   }
 };
 
-// Check if next move results in death
-export const checkNextMove = async (gameId, currentPosition, walletAddress = "demo") => {
+// Check next move with server verification
+export const checkNextMove = async (gameId, currentPosition, walletAddress) => {
   try {
-    const checkMove = httpsCallable(functions, 'checkNextMove');
-    const result = await checkMove({ 
+    const checkNextMoveServer = httpsCallable(functions, 'checkNextMove');
+    const result = await checkNextMoveServer({ 
       gameId, 
       currentPosition,
-      walletAddress
+      walletAddress 
     });
     return result.data;
   } catch (error) {
-    console.error('Error checking next move:', error);
-    Swal.fire({
-      title: 'Move Check Error',
-      text: error.message || 'Failed to check next move.',
-      icon: 'error',
-      confirmButtonText: 'OK'
-    });
-    throw error;
+    console.error('Failed to check next move:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Move failed. Please try again.';
+    
+    if (error.message.includes('rate limit') || error.message.includes('too many')) {
+      userMessage = 'Too many moves. Please wait a moment.';
+    } else if (error.message.includes('network') || error.message.includes('connection')) {
+      userMessage = 'Network error. Please check your connection.';
+    } else if (error.message.includes('game') || error.message.includes('session')) {
+      userMessage = 'Game session error. Please restart the game.';
+    }
+    
+    throw new Error(userMessage);
   }
 };
 
-// End game round and get final results
-export const endGameRound = async (gameId, finalPosition, walletAddress = "demo") => {
+// End game round
+export const endGameRound = async (gameId, finalPosition, walletAddress) => {
   try {
     const endRound = httpsCallable(functions, 'endRound');
     const result = await endRound({ 
       gameId, 
       finalPosition,
-      walletAddress
+      walletAddress 
     });
     return result.data;
   } catch (error) {
-    console.error('Error ending game round:', error);
-    Swal.fire({
-      title: 'Game End Error',
-      text: error.message || 'Failed to end game round.',
-      icon: 'error',
-      confirmButtonText: 'OK'
+    console.error('Failed to end game round:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Failed to end game. Please try again.';
+    
+    if (error.message.includes('rate limit') || error.message.includes('too many')) {
+      userMessage = 'Too many requests. Please wait a moment.';
+    } else if (error.message.includes('network') || error.message.includes('connection')) {
+      userMessage = 'Network error. Please check your connection.';
+    } else if (error.message.includes('game') || error.message.includes('session')) {
+      userMessage = 'Game session error. Please restart the game.';
+    }
+    
+    throw new Error(userMessage);
+  }
+};
+
+// Secure cashout with server-side verification
+export const cashOut = async (gameId, walletAddress) => {
+  try {
+    const cashOutFunction = httpsCallable(functions, 'cashOut');
+    const result = await cashOutFunction({ 
+      gameId, 
+      walletAddress 
     });
-    throw error;
+    return result.data;
+  } catch (error) {
+    console.error('Failed to cash out:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Cash out failed. Please try again.';
+    
+    if (error.message.includes('insufficient') || error.message.includes('balance')) {
+      userMessage = 'House wallet has insufficient balance. Please try again later.';
+    } else if (error.message.includes('rate limit') || error.message.includes('too many')) {
+      userMessage = 'Too many cash out attempts. Please wait a moment.';
+    } else if (error.message.includes('network') || error.message.includes('connection')) {
+      userMessage = 'Network error. Please check your connection.';
+    } else if (error.message.includes('already cashed out')) {
+      userMessage = 'Game already cashed out.';
+    } else if (error.message.includes('game') || error.message.includes('session')) {
+      userMessage = 'Game session error. Please restart the game.';
+    }
+    
+    throw new Error(userMessage);
   }
 }; 

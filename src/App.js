@@ -6,7 +6,7 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { clusterApiUrl } from '@solana/web3.js';
-import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound } from './services/gameService';
+import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer } from './services/gameService';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Swal from 'sweetalert2';
 
@@ -314,7 +314,7 @@ function GameApp() {
         animating.current = false;
         
         // Reset game state but keep persistent board (trees stay the same)
-        // setBoard(makeBoard()); // Removed - board stays persistent
+        setBoard(resetBoardCoins(board)); // Reset coins for new game
       }
     } catch (error) {
       console.error('Failed to start game:', error);
@@ -470,21 +470,69 @@ function GameApp() {
     }
   };
 
-  // Cash out function
+  // Secure cash out function with server-side verification
   const cashOut = async () => {
     if (!gameActive || !gameId || isLoading || isDying || animating.current) return;
     
     setIsLoading(true);
     try {
       const walletAddress = publicKey.toString();
-      const result = await endGameRound(gameId, currentPosition, walletAddress);
+      const result = await cashOutServer(gameId, walletAddress);
       
       if (result.success) {
         setCashedOut(true);
         setGameActive(false);
-        setCurrentWinnings(result.winnings);
+        setCurrentWinnings(result.payout);
         setCurrentMultiplier(result.multiplier);
-        setWin(true); // Show win modal on cashout
+        
+        // Show success modal with transaction details
+        Swal.fire({
+          title: '🎉 Cash Out Successful! 🎉',
+          html: `
+            <div style="text-align: center;">
+              <p><strong>Payout: $${result.payout.toFixed(2)}</strong></p>
+              <p>Multiplier: ${result.multiplier.toFixed(2)}x</p>
+              <p style="font-size: 12px; color: #666;">Transaction: ${result.txSignature}</p>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'Play Again',
+          confirmButtonColor: '#28a745',
+          allowOutsideClick: false,
+          allowEscapeKey: false
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Reset game state
+            setGameOver(false);
+            setWin(false);
+            setCashedOut(false);
+            setIsDying(false);
+            setStreak(0);
+            setScore(0);
+            setCurrentWinnings(betAmount);
+            setCurrentMultiplier(1.0);
+            setPlayer({ lane: CENTER_LANE, col: 4 });
+            setCurrentPosition(4);
+            setCarPositions([]);
+            setEaglePositions([]);
+            setBackgroundCars([]);
+            setRoadBlocks([]);
+            setClaimedCoins([]);
+            setBoard(resetBoardCoins(board)); // Reset coins for new game
+            setHash(generateHash());
+            setGameActive(false);
+            setGameId(null);
+            animating.current = false;
+            chickenAnimRef.current = { col: 4, frame: 3 };
+            
+            // Small delay to ensure board reset is processed
+            setTimeout(() => {
+              setForceRerender(prev => prev + 1);
+              // Force a complete board refresh to ensure coins are visible
+              setBoard(prevBoard => resetBoardCoins(prevBoard));
+            }, 100);
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to cash out:', error);
@@ -1006,12 +1054,19 @@ function GameApp() {
           setBackgroundCars([]);
           setRoadBlocks([]);
           setClaimedCoins([]);
-          setBoard(resetBoardCoins(board));
+          setBoard(resetBoardCoins(board)); // Reset coins for new game
           setHash(generateHash());
           setGameActive(false);
           setGameId(null);
           animating.current = false;
           chickenAnimRef.current = { col: 4, frame: 3 };
+          
+          // Small delay to ensure board reset is processed
+          setTimeout(() => {
+            setForceRerender(prev => prev + 1);
+            // Force a complete board refresh to ensure coins are visible
+            setBoard(prevBoard => resetBoardCoins(prevBoard));
+          }, 100);
         }
       });
     }
@@ -1021,7 +1076,7 @@ function GameApp() {
     if (win) {
       Swal.fire({
         title: '🎉 YOU WIN! 🎉',
-        text: `Congratulations! You reached the end and won $${currentWinnings.toFixed(2)}!`,
+        text: `Congratulations! You reached the end! Bet: $${betAmount.toFixed(2)} | Winnings: $${currentWinnings.toFixed(2)}`,
         icon: 'success',
         confirmButtonText: 'Play Again',
         confirmButtonColor: '#28a745',
@@ -1045,12 +1100,19 @@ function GameApp() {
           setBackgroundCars([]);
           setRoadBlocks([]);
           setClaimedCoins([]);
-          setBoard(resetBoardCoins(board));
+          setBoard(resetBoardCoins(board)); // Reset coins for new game
           setHash(generateHash());
           setGameActive(false);
           setGameId(null);
           animating.current = false;
           chickenAnimRef.current = { col: 4, frame: 3 };
+          
+          // Small delay to ensure board reset is processed
+          setTimeout(() => {
+            setForceRerender(prev => prev + 1);
+            // Force a complete board refresh to ensure coins are visible
+            setBoard(prevBoard => resetBoardCoins(prevBoard));
+          }, 100);
         }
       });
     }
@@ -1552,7 +1614,7 @@ function GameApp() {
                 </div>
                 <div className="streak-multiplier-winnings">
                   <div className="streak-multiplier-winnings-label">Current Winnings</div>
-                  <div className="streak-multiplier-winnings-value">${currentWinnings}</div>
+                  <div className="streak-multiplier-winnings-value">${currentWinnings.toFixed(2)}</div>
                 </div>
                 <div className="streak-multiplier-streak-row">
                   <span className="streak-multiplier-streak-count">{streak}</span>
@@ -1575,7 +1637,7 @@ function GameApp() {
               />
               <div className="streak-multiplier-values-mobile">
                 <div className="streak-multiplier-mult-mobile">{streak === 0 ? '1.00x' : DIFFICULTY_MULTIPLIERS[difficulty][Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1))].toFixed(2) + 'x'}</div>
-                <div className="streak-multiplier-winnings-mobile">${currentWinnings}</div>
+                <div className="streak-multiplier-winnings-mobile">${currentWinnings.toFixed(2)}</div>
                 <div className="streak-multiplier-streak-row-mobile">
                   <span className="streak-multiplier-streak-count-mobile">{streak}</span>
                   <img 
