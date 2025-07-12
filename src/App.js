@@ -6,7 +6,7 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { clusterApiUrl } from '@solana/web3.js';
-import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer } from './services/gameService';
+import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer, getLeaderboard } from './services/gameService';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Swal from 'sweetalert2';
 
@@ -241,6 +241,12 @@ function GameApp() {
   const [visibleCols, setVisibleCols] = useState(getVisibleCols());
   const [selectorFrame, setSelectorFrame] = useState(0);
   const [selectedToken, setSelectedToken] = useState("SOLANA");
+  
+  // Leaderboard state
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardTimeframe, setLeaderboardTimeframe] = useState("all");
   
   // Server-side game state
   const [gameId, setGameId] = useState(null);
@@ -545,6 +551,33 @@ function GameApp() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fetch leaderboard data
+  const fetchLeaderboard = async (timeframe = "all") => {
+    setLeaderboardLoading(true);
+    try {
+      const result = await getLeaderboard(15, timeframe);
+      if (result.success) {
+        setLeaderboardData(result.leaderboard);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      Swal.fire({
+        title: 'Leaderboard Error',
+        text: error.message || 'Failed to fetch leaderboard data.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  // Open leaderboard modal
+  const openLeaderboard = () => {
+    setShowLeaderboard(true);
+    fetchLeaderboard(leaderboardTimeframe);
   };
 
   // Preload all images on mount
@@ -1159,7 +1192,7 @@ function GameApp() {
                   <div style={{ minWidth: 120 }}>
                     <WalletMultiButton />
                   </div>
-                  <button className="game-header-leaderboard">
+                  <button className="game-header-leaderboard" onClick={openLeaderboard}>
                     <img src="/game/UI/charticon.svg" alt="Leaderboard" style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
                   </button>
                 </div>
@@ -1190,7 +1223,7 @@ function GameApp() {
                   <div className="border-t border-gray-700 mt-2 pt-2"></div>
                   <div className="flex flex-col gap-2">
                     <WalletMultiButton className="mobile-wallet-btn" />
-                    <button className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded transition-colors" onClick={() => {/* leaderboard logic */}}><img src="/game/UI/charticon.svg" alt="Leaderboard" className="w-5 h-5 opacity-100" style={{filter: 'brightness(0) invert(1)'}} /><span className="text-white text-sm">Leaderboard</span></button>
+                    <button className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded transition-colors" onClick={openLeaderboard}><img src="/game/UI/charticon.svg" alt="Leaderboard" className="w-5 h-5 opacity-100" style={{filter: 'brightness(0) invert(1)'}} /><span className="text-white text-sm">Leaderboard</span></button>
                   </div>
                 </div>
               </div>
@@ -1758,6 +1791,87 @@ function GameApp() {
                 </div>
               </div>
             </div>
+
+            {/* Leaderboard Modal Overlay */}
+            {showLeaderboard && (
+              <div className="leaderboard-modal-overlay" onClick={() => setShowLeaderboard(false)}>
+                <div className="leaderboard-modal" style={{height: 600, width: 720}} onClick={e => e.stopPropagation()}>
+                  <button className="leaderboard-close-btn-absolute" onClick={() => setShowLeaderboard(false)}>✕</button>
+                  <div className="leaderboard-header">
+                    <div className="leaderboard-title">Leaderboard</div>
+                    <div className="leaderboard-header-controls hide-mobile">
+                      <span className="leaderboard-sort-label">sort by:</span>
+                      <select
+                        className="leaderboard-sort-select"
+                        value={leaderboardTimeframe}
+                        onChange={e => {
+                          setLeaderboardTimeframe(e.target.value);
+                          fetchLeaderboard(e.target.value);
+                        }}
+                      >
+                        <option value="all">All Time</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                      </select>
+                    </div>
+                  </div>
+                  {/* Podium for Top 3 */}
+                  {leaderboardData.length > 0 && (
+                    <div className="leaderboard-podium">
+                      {/* 2nd Place */}
+                      {leaderboardData[1] && (
+                        <div className="leaderboard-podium-2">
+                          <div className="leaderboard-podium-rank">#2</div>
+                          <div className="leaderboard-podium-wallet">{leaderboardData[1].walletAddress.slice(0, 6)}...{leaderboardData[1].walletAddress.slice(-4)}</div>
+                          <div className="leaderboard-podium-mult">{leaderboardData[1].payoutMultiplier.toFixed(2)}x</div>
+                          <div className="leaderboard-podium-amount">${leaderboardData[1].payoutAmount.toFixed(2)}</div>
+                        </div>
+                      )}
+                      {/* 1st Place */}
+                      <div className="leaderboard-podium-1">
+                        <div className="leaderboard-podium-rank">#1</div>
+                        <div className="leaderboard-podium-wallet">{leaderboardData[0].walletAddress.slice(0, 6)}...{leaderboardData[0].walletAddress.slice(-4)}</div>
+                        <div className="leaderboard-podium-mult">{leaderboardData[0].payoutMultiplier.toFixed(2)}x</div>
+                        <div className="leaderboard-podium-amount">${leaderboardData[0].payoutAmount.toFixed(2)}</div>
+                      </div>
+                      {/* 3rd Place */}
+                      {leaderboardData[2] && (
+                        <div className="leaderboard-podium-3">
+                          <div className="leaderboard-podium-rank">#3</div>
+                          <div className="leaderboard-podium-wallet">{leaderboardData[2].walletAddress.slice(0, 6)}...{leaderboardData[2].walletAddress.slice(-4)}</div>
+                          <div className="leaderboard-podium-mult">{leaderboardData[2].payoutMultiplier.toFixed(2)}x</div>
+                          <div className="leaderboard-podium-amount">${leaderboardData[2].payoutAmount.toFixed(2)}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="leaderboard-list-container leaderboard-list-centered" style={{height: 220, marginTop: 12}}>
+                    {leaderboardLoading ? (
+                      <div className="leaderboard-loading">Loading leaderboard...</div>
+                    ) : leaderboardData.length === 0 ? (
+                      <div className="leaderboard-empty">No cashouts found for this timeframe.</div>
+                    ) : (
+                      <div className="leaderboard-list">
+                        {leaderboardData.slice(3).map((entry, index) => (
+                          <div key={entry.gameId} className="leaderboard-row">
+                            <div className="leaderboard-rank">#{entry.rank}</div>
+                            <div className="leaderboard-wallet">{entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}</div>
+                            {/* Hide difficulty on mobile */}
+                            <div className="leaderboard-difficulty hide-mobile">{entry.difficulty}</div>
+                            <div className="leaderboard-multiplier">{entry.payoutMultiplier.toFixed(2)}x</div>
+                            <div className="leaderboard-amount">${entry.payoutAmount.toFixed(2)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="leaderboard-footer leaderboard-footer-centered">
+                    <button className="leaderboard-close-btn-main" style={{marginTop: 24}} onClick={() => setShowLeaderboard(false)}>CLOSE</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 }

@@ -205,3 +205,28 @@ export const cashOut = async (gameId, walletAddress) => {
     throw new Error(userMessage);
   }
 }; 
+
+// Get leaderboard data
+export const getLeaderboard = async (limit = 10, timeframe = "all") => {
+  try {
+    const getLeaderboardFunction = httpsCallable(functions, 'getLeaderboard');
+    const result = await getLeaderboardFunction({ 
+      limit, 
+      timeframe 
+    });
+    return result.data;
+  } catch (error) {
+    console.error('Failed to fetch leaderboard:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Failed to fetch leaderboard. Please try again.';
+    
+    if (error.message && (error.message.includes('rate limit') || error.message.includes('too many'))) {
+      userMessage = 'Too many requests. Please wait a moment.';
+    } else if (error.message && (error.message.includes('network') || error.message.includes('connection'))) {
+      userMessage = 'Network error. Please check your connection.';
+    }
+    
+    throw new Error(userMessage);
+  }
+}; 
