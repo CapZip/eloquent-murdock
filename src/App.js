@@ -5,7 +5,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import '@solana/wallet-adapter-react-ui/styles.css';
-import { clusterApiUrl } from '@solana/web3.js';
+import { clusterApiUrl, Connection } from '@solana/web3.js';
 import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer, getLeaderboard } from './services/gameService';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Swal from 'sweetalert2';
@@ -274,6 +274,24 @@ function GameApp() {
     { label: "POPCAT", value: "POPCAT", icon: "🐱" },
     { label: "SOLANA", value: "SOLANA", icon: <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 18, height: 18, verticalAlign: 'middle' }} /> }
   ];
+
+  const [solBalance, setSolBalance] = useState(null);
+  const connection = useMemo(() => new Connection("https://fittest-icy-field.solana-mainnet.quiknode.pro/6fbfeeff12d8d6537bafad49b437ca821085d17a/"), []);
+
+  // Fetch SOL balance when wallet changes
+  useEffect(() => {
+    if (!publicKey) {
+      setSolBalance(null);
+      return;
+    }
+    let isMounted = true;
+    connection.getBalance(publicKey).then(lamports => {
+      if (isMounted) setSolBalance(lamports / 1e9);
+    }).catch(() => {
+      if (isMounted) setSolBalance(null);
+    });
+    return () => { isMounted = false; };
+  }, [publicKey, connection]);
 
   // Start game function using server
   const startGame = async () => {
@@ -1173,22 +1191,12 @@ function GameApp() {
                 <div className="game-header-title">UNCROSSABLE</div>
                 {/* Desktop: right side menu */}
                 <div className="game-header-desktop-menu">
-                  <div className="game-header-coins">
-                    <span>100</span>
-                    {selectedToken === "SOLANA"
-                      ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
-                      : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
-                    }
-                  </div>
-                  <select
-                    className="game-header-selector"
-                    value={selectedToken}
-                    onChange={e => setSelectedToken(e.target.value)}
-                  >
-                    {tokenOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{typeof opt.icon === 'string' ? opt.icon + ' ' : ''}{opt.label}</option>
-                    ))}
-                  </select>
+                  {publicKey && (
+                    <div className="game-header-coins">
+                      <span>{solBalance !== null ? solBalance.toFixed(3) : "-"}</span>
+                      <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+                    </div>
+                  )}
                   <div style={{ minWidth: 120 }}>
                     <WalletMultiButton />
                   </div>
@@ -1198,13 +1206,12 @@ function GameApp() {
                 </div>
                 {/* Mobile: amount and menu button */}
                 <div className="game-header-mobile-menu">
-                  <div className="game-header-coins">
-                    <span>100</span>
-                    {selectedToken === "SOLANA"
-                      ? <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
-                      : <span style={{ marginLeft: 4 }}>{tokenOptions.find(opt => opt.value === selectedToken).icon}</span>
-                    }
-                  </div>
+                  {publicKey && (
+                    <div className="game-header-coins">
+                      <span>{solBalance !== null ? solBalance.toFixed(3) : "-"}</span>
+                      <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
+                    </div>
+                  )}
                   <button className="mobile-menu-btn" onClick={() => setShowMobileMenu(v => !v)}>
                     <svg className="w-7 h-7" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                   </button>
