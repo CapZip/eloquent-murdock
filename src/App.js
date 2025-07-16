@@ -246,7 +246,6 @@ function GameApp() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-  const [leaderboardTimeframe, setLeaderboardTimeframe] = useState("all");
   
   // Server-side game state
   const [gameId, setGameId] = useState(null);
@@ -572,10 +571,10 @@ function GameApp() {
   };
 
   // Fetch leaderboard data
-  const fetchLeaderboard = async (timeframe = "all") => {
+  const fetchLeaderboard = async () => {
     setLeaderboardLoading(true);
     try {
-      const result = await getLeaderboard(15, timeframe);
+      const result = await getLeaderboard(15, "7d");
       if (result.success) {
         setLeaderboardData(result.leaderboard);
       }
@@ -595,7 +594,7 @@ function GameApp() {
   // Open leaderboard modal
   const openLeaderboard = () => {
     setShowLeaderboard(true);
-    fetchLeaderboard(leaderboardTimeframe);
+    fetchLeaderboard();
   };
 
   // Preload all images on mount
@@ -1666,6 +1665,22 @@ function GameApp() {
                   <span className="streak-multiplier-streak-label">streak</span>
                 </div>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 16, marginBottom: 0, gap: 16 }}>
+                <a href="https://letsbonk.fun/" target="_blank" rel="noopener noreferrer">
+                  <img
+                    src="https://i.imgur.com/Y24GMtY.png"
+                    alt="Bonk"
+                    style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', background: '#222' }}
+                  />
+                </a>
+                <a href="https://x.com/uncrossablegg" target="_blank" rel="noopener noreferrer">
+                  <img
+                    src="https://i.imgur.com/wKWLHbf.jpeg"
+                    alt="X"
+                    style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', background: '#222' }}
+                  />
+                </a>
+              </div>
             </div>
 
             {/* Streak and Multiplier Tracker (Mobile) */}
@@ -1688,6 +1703,22 @@ function GameApp() {
                   <span className="streak-multiplier-streak-label-mobile">streak</span>
                 </div>
               </div>
+            </div>
+            <div className="streak-multiplier-logos-mobile" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 10, gap: 10 }}>
+              <a href="https://letsbonk.fun/" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://i.imgur.com/Y24GMtY.png"
+                  alt="Bonk"
+                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #fff', background: '#222' }}
+                />
+              </a>
+              <a href="https://x.com/uncrossablegg" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://i.imgur.com/wKWLHbf.jpeg"
+                  alt="X"
+                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #fff', background: '#222' }}
+                />
+              </a>
             </div>
       
             
@@ -1806,22 +1837,7 @@ function GameApp() {
                   <button className="leaderboard-close-btn-absolute" onClick={() => setShowLeaderboard(false)}>✕</button>
                   <div className="leaderboard-header">
                     <div className="leaderboard-title">Leaderboard</div>
-                    <div className="leaderboard-header-controls hide-mobile">
-                      <span className="leaderboard-sort-label">sort by:</span>
-                      <select
-                        className="leaderboard-sort-select"
-                        value={leaderboardTimeframe}
-                        onChange={e => {
-                          setLeaderboardTimeframe(e.target.value);
-                          fetchLeaderboard(e.target.value);
-                        }}
-                      >
-                        <option value="all">All Time</option>
-                        <option value="24h">Last 24 Hours</option>
-                        <option value="7d">Last 7 Days</option>
-                        <option value="30d">Last 30 Days</option>
-                      </select>
-                    </div>
+                    {/* Removed sorting controls */}
                   </div>
                   {/* Podium for Top 3 */}
                   {leaderboardData.length > 0 && (
