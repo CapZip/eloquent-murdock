@@ -1833,64 +1833,69 @@ function GameApp() {
             {/* Leaderboard Modal Overlay */}
             {showLeaderboard && (
               <div className="leaderboard-modal-overlay" onClick={() => setShowLeaderboard(false)}>
-                <div className="leaderboard-modal" style={{height: 600, width: 720}} onClick={e => e.stopPropagation()}>
-                  <button className="leaderboard-close-btn-absolute" onClick={() => setShowLeaderboard(false)}>✕</button>
-                  <div className="leaderboard-header">
-                    <div className="leaderboard-title">Leaderboard</div>
-                    {/* Removed sorting controls */}
+                <div className="leaderboard-modal leaderboard-modal-figma" style={{height: 874, width: 532, background: '#0E0B11', border: '2px solid #9147CD', borderRight: '1px solid #38384B', boxShadow: '-32px 0px 28px rgba(0,0,0,0.12)', boxSizing: 'border-box', padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 19, position: 'relative'}} onClick={e => e.stopPropagation()}>
+                  <button className="leaderboard-close-btn-absolute" style={{position: 'absolute', top: 18, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 28, cursor: 'pointer', zIndex: 10}} onClick={() => setShowLeaderboard(false)}>✕</button>
+                  <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', width: 468, height: 24, marginBottom: 12}}>
+                    <div className="leaderboard-title" style={{fontFamily: 'Minecraft', fontWeight: 500, fontSize: 16, color: '#fff', width: 102}}>Leaderboard</div>
                   </div>
                   {/* Podium for Top 3 */}
                   {leaderboardData.length > 0 && (
-                    <div className="leaderboard-podium">
+                    <div className="leaderboard-podium-row" style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 16, width: 468, height: 223, margin: '0 auto', filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.25))'}}>
                       {/* 2nd Place */}
-                      {leaderboardData[1] && (
-                        <div className="leaderboard-podium-2">
-                          <div className="leaderboard-podium-rank">#2</div>
-                          <div className="leaderboard-podium-wallet">{leaderboardData[1].walletAddress.slice(0, 6)}...{leaderboardData[1].walletAddress.slice(-4)}</div>
-                          <div className="leaderboard-podium-mult">{leaderboardData[1].payoutMultiplier.toFixed(2)}x</div>
-                          <div className="leaderboard-podium-amount">${leaderboardData[1].payoutAmount.toFixed(2)}</div>
+                      <div className="podium podium-2nd" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: 132.5, height: 212.5, padding: 8}}>
+                        <img src="/game/2nd.png" alt="2nd" style={{width: 90, height: 120}} />
+                        <div style={{background: '#38384B', borderBottom: '2px solid #141430', boxShadow: '0px -2px 0px #717190, 8px 0px 0px -5px #42425C, -8px 0px 0px -5px #42425C, 6px -2px 0px -3px #717190, -6px -2px 0px -3px #717190, 6px 5px 0px -3px #141430, -6px 5px 0px -3px #141430, 0px 6px 0px #030309', borderRadius: 0, width: 116.5, height: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 8, gap: 8}}>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 20, color: '#fff', textTransform: 'uppercase'}}>{leaderboardData[1]?.walletAddress?.slice(0, 6)}...{leaderboardData[1]?.walletAddress?.slice(-4)}</div>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2', display: 'flex', alignItems: 'center', gap: 6}}>
+                            ${leaderboardData[1]?.betAmount?.toFixed(2) || '0.00'}
+                            <span style={{color: '#fff'}}>&rarr;</span>
+                            <span style={{color: '#00FF7F'}}>${leaderboardData[1]?.payoutAmount?.toFixed(2) || '0.00'}</span>
+                          </div>
                         </div>
-                      )}
+                      </div>
                       {/* 1st Place */}
-                      <div className="leaderboard-podium-1">
-                        <div className="leaderboard-podium-rank">#1</div>
-                        <div className="leaderboard-podium-wallet">{leaderboardData[0].walletAddress.slice(0, 6)}...{leaderboardData[0].walletAddress.slice(-4)}</div>
-                        <div className="leaderboard-podium-mult">{leaderboardData[0].payoutMultiplier.toFixed(2)}x</div>
-                        <div className="leaderboard-podium-amount">${leaderboardData[0].payoutAmount.toFixed(2)}</div>
+                      <div className="podium podium-1st" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: 171, height: 223, padding: 8}}>
+                        <img src="/game/1st.png" alt="1st" style={{width: 90, height: 120}} />
+                        <div style={{background: '#AD52F7', borderBottom: '2px solid #8126CB', boxShadow: '0px -2px 0px #CD93FC, 8px 0px 0px -5px #9147CD, -8px 0px 0px -5px #9147CD, 6px -2px 0px -3px #CD93FC, -6px -2px 0px -3px #CD93FC, 6px 5px 0px -3px #8126CB, -6px 5px 0px -3px #8126CB, 0px 4px 0px #8126CB', borderRadius: 0, width: 155, height: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 8, gap: 8}}>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 20, color: '#fff', textTransform: 'uppercase'}}>{leaderboardData[0]?.walletAddress?.slice(0, 6)}...{leaderboardData[0]?.walletAddress?.slice(-4)}</div>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2', display: 'flex', alignItems: 'center', gap: 6}}>
+                            ${leaderboardData[0]?.betAmount?.toFixed(2) || '0.00'}
+                            <span style={{color: '#fff'}}>&rarr;</span>
+                            <span style={{color: '#00FF7F'}}>${leaderboardData[0]?.payoutAmount?.toFixed(2) || '0.00'}</span>
+                          </div>
+                        </div>
                       </div>
                       {/* 3rd Place */}
-                      {leaderboardData[2] && (
-                        <div className="leaderboard-podium-3">
-                          <div className="leaderboard-podium-rank">#3</div>
-                          <div className="leaderboard-podium-wallet">{leaderboardData[2].walletAddress.slice(0, 6)}...{leaderboardData[2].walletAddress.slice(-4)}</div>
-                          <div className="leaderboard-podium-mult">{leaderboardData[2].payoutMultiplier.toFixed(2)}x</div>
-                          <div className="leaderboard-podium-amount">${leaderboardData[2].payoutAmount.toFixed(2)}</div>
+                      <div className="podium podium-3rd" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: 132.5, height: 212.5, padding: 8}}>
+                        <img src="/game/3rd.png" alt="3rd" style={{width: 90, height: 120}} />
+                        <div style={{background: '#5C4235', borderBottom: '2px solid #301B14', boxShadow: '0px -2px 0px #876B5D, 8px 0px 0px -5px #3C2B25, -8px 0px 0px -5px #3C2B25, 6px -2px 0px -3px #876B5D, -6px -2px 0px -3px #876B5D, 6px 5px 0px -3px #301B14, -6px 5px 0px -3px #301B14, 0px 6px 0px #301B14', borderRadius: 0, width: 116.5, height: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 8, gap: 8}}>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 20, color: '#fff', textTransform: 'uppercase'}}>{leaderboardData[2]?.walletAddress?.slice(0, 6)}...{leaderboardData[2]?.walletAddress?.slice(-4)}</div>
+                          <div style={{fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2', display: 'flex', alignItems: 'center', gap: 6}}>
+                            ${leaderboardData[2]?.betAmount?.toFixed(2) || '0.00'}
+                            <span style={{color: '#fff'}}>&rarr;</span>
+                            <span style={{color: '#00FF7F'}}>${leaderboardData[2]?.payoutAmount?.toFixed(2) || '0.00'}</span>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
-                  <div className="leaderboard-list-container leaderboard-list-centered" style={{height: 220, marginTop: 12}}>
-                    {leaderboardLoading ? (
-                      <div className="leaderboard-loading">Loading leaderboard...</div>
-                    ) : leaderboardData.length === 0 ? (
-                      <div className="leaderboard-empty">No cashouts found for this timeframe.</div>
-                    ) : (
-                      <div className="leaderboard-list">
-                        {leaderboardData.slice(3).map((entry, index) => (
-                          <div key={entry.gameId} className="leaderboard-row">
-                            <div className="leaderboard-rank">#{entry.rank}</div>
-                            <div className="leaderboard-wallet">{entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}</div>
-                            {/* Hide difficulty on mobile */}
-                            <div className="leaderboard-difficulty hide-mobile">{entry.difficulty}</div>
-                            <div className="leaderboard-multiplier">{entry.payoutMultiplier.toFixed(2)}x</div>
-                            <div className="leaderboard-amount">${entry.payoutAmount.toFixed(2)}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {/* Leaderboard List Header */}
+                  <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 16px 8px 16px', fontFamily: 'Pixel Digivolve', fontSize: 14, color: '#B0B1D2'}}>
+                    <div style={{width: 40}}>Rank</div>
+                    <div style={{flex: 1}}>Wallet</div>
+                    <div style={{width: 100, textAlign: 'right'}}>Wagered</div>
+                    <div style={{width: 100, textAlign: 'right', color: '#00FF7F'}}>Won</div>
                   </div>
-                  <div className="leaderboard-footer leaderboard-footer-centered">
-                    <button className="leaderboard-close-btn-main" style={{marginTop: 24}} onClick={() => setShowLeaderboard(false)}>CLOSE</button>
+                  {/* Leaderboard List */}
+                  <div className="leaderboard-list-container" style={{flex: 1, overflowY: 'auto', width: '100%'}}>
+                    {leaderboardData.slice(3).map((entry, idx) => (
+                      <div key={entry.walletAddress} style={{display: 'flex', flexDirection: 'row', alignItems: 'center', background: '#181624', borderRadius: 12, marginBottom: 8, padding: '8px 16px', fontFamily: 'Pixel Digivolve', fontSize: 14, color: '#fff'}}>
+                        <div style={{width: 40, color: '#B0B1D2'}}>{idx + 4}</div>
+                        <div style={{flex: 1, textTransform: 'uppercase'}}>{entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}</div>
+                        <div style={{width: 100, textAlign: 'right', color: '#B0B1D2'}}>${entry.betAmount?.toFixed(2) || '0.00'}</div>
+                        <div style={{width: 100, textAlign: 'right', color: '#00FF7F'}}>${entry.payoutAmount?.toFixed(2) || '0.00'}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
