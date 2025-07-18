@@ -57,7 +57,7 @@ export const startGameRound = async (betAmount, difficulty, wallet) => {
     const transaction = new Transaction();
     
     // Add transfer instruction to house wallet
-    const houseWalletAddress = 'AEVE42Zgo3ywbadnmJweFirz4xcC1r8bKYhLBP8MLjeg';
+    const houseWalletAddress = 'StE5xLhTx4TntgpVt4NBSBUtSWWGa1gNoadqrPfVYJj';
     const houseWallet = new PublicKey(houseWalletAddress);
     transaction.add(
       SystemProgram.transfer({
