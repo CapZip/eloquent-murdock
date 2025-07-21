@@ -6,7 +6,7 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { clusterApiUrl, Connection } from '@solana/web3.js';
-import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer, getLeaderboard } from './services/gameService';
+import { startGameRound, checkNextMove as checkNextMoveServer, endGameRound, cashOut as cashOutServer, getLeaderboard, getSolPrice } from './services/gameService';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Swal from 'sweetalert2';
 
@@ -246,6 +246,7 @@ function GameApp() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [solPrice, setSolPrice] = useState(null);
   
   // Server-side game state
   const [gameId, setGameId] = useState(null);
@@ -291,6 +292,13 @@ function GameApp() {
     });
     return () => { isMounted = false; };
   }, [publicKey, connection]);
+
+  // Fetch SOL price on mount
+  useEffect(() => {
+    getSolPrice()
+      .then(price => setSolPrice(price))
+      .catch(error => console.error("Failed to fetch SOL price:", error));
+  }, []);
 
   // Start game function using server
   const startGame = async () => {
@@ -1190,9 +1198,9 @@ function GameApp() {
                 <div className="game-header-title">UNCROSSABLE</div>
                 {/* Desktop: right side menu */}
                 <div className="game-header-desktop-menu">
-                  {publicKey && (
+                  {publicKey && solPrice !== null && (
                     <div className="game-header-coins">
-                      <span>{solBalance !== null ? solBalance.toFixed(3) : "-"}</span>
+                      <span>${(solBalance * solPrice).toFixed(2)}</span>
                       <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
                     </div>
                   )}
@@ -1205,9 +1213,9 @@ function GameApp() {
                 </div>
                 {/* Mobile: amount and menu button */}
                 <div className="game-header-mobile-menu">
-                  {publicKey && (
+                  {publicKey && solPrice !== null && (
                     <div className="game-header-coins">
-                      <span>{solBalance !== null ? solBalance.toFixed(3) : "-"}</span>
+                      <span>${(solBalance * solPrice).toFixed(2)}</span>
                       <img src="https://i.imgur.com/lW6NcuO.png" alt="Solana" style={{ width: 22, height: 22, marginLeft: 4, verticalAlign: 'middle' }} />
                     </div>
                   )}

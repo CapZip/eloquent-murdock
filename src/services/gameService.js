@@ -5,12 +5,24 @@ import '../firebase'; // Initialize Firebase first
 const functions = getFunctions();
 const LAMPORTS_PER_SOL = 1e9;
 
+export const getSolPrice = async () => {
+  try {
+    const getSolPriceFunction = httpsCallable(functions, 'getSolPrice');
+    const result = await getSolPriceFunction();
+    if (result.data.success) {
+      return result.data.price;
+    }
+    throw new Error(result.data.error || 'Failed to get SOL price from backend.');
+  } catch (error) {
+    console.error('Error fetching SOL price:', error);
+    throw new Error('Could not fetch SOL to USD price.');
+  }
+};
+
 // Calculate SOL amount from USD bet amount
 async function calculateSolAmount(usdAmount) {
   try {
-    const getSolPrice = httpsCallable(functions, 'getSolPrice');
-    const result = await getSolPrice();
-    const solPrice = result.data.price;
+    const solPrice = await getSolPrice();
     return usdAmount / solPrice;
   } catch (error) {
     console.error('Error calculating SOL amount:', error);
