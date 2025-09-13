@@ -1676,7 +1676,7 @@ function GameApp() {
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 16, marginBottom: 0, gap: 16 }}>
                 <a href="https://letsbonk.fun/" target="_blank" rel="noopener noreferrer">
                   <img
-                    src="https://i.imgur.com/Y24GMtY.png"
+                    src="https://i.imgur.com/hCCc9O1.png"
                     alt="Bonk"
                     style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', background: '#222' }}
                   />
@@ -1715,7 +1715,7 @@ function GameApp() {
             <div className="streak-multiplier-logos-mobile" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 10, gap: 10 }}>
               <a href="https://letsbonk.fun/" target="_blank" rel="noopener noreferrer">
                 <img
-                  src="https://i.imgur.com/Y24GMtY.png"
+                  src="https://i.imgur.com/hCCc9O1.png"
                   alt="Bonk"
                   style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #fff', background: '#222' }}
                 />
