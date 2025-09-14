@@ -514,16 +514,14 @@ function GameApp() {
       if (result.success) {
         setCashedOut(true);
         setGameActive(false);
-        setCurrentWinnings(result.payout);
-        setCurrentMultiplier(result.multiplier);
         
-        // Show success modal with transaction details
+        // Show success modal with transaction details using our own calculations
         Swal.fire({
           title: '🎉 Cash Out Successful! 🎉',
           html: `
             <div style="text-align: center;">
-              <p><strong>Payout: $${result.payout.toFixed(2)}</strong></p>
-              <p>Multiplier: ${result.multiplier.toFixed(2)}x</p>
+              <p><strong>Payout: $${currentWinnings.toFixed(2)}</strong></p>
+              <p>Multiplier: ${currentMultiplier.toFixed(2)}x</p>
               <p style="font-size: 12px; color: #666;">Transaction: ${result.txSignature}</p>
             </div>
           `,
