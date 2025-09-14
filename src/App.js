@@ -409,7 +409,7 @@ function GameApp() {
           setStreak(prev => {
             const newStreak = prev + 1;
             // Update multiplier and winnings with the new streak value
-        const multiplierIndex = Math.max(0, Math.min(newStreak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+        const multiplierIndex = Math.max(0, Math.min(newStreak, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
         const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
         setCurrentMultiplier(newMultiplier);
         setCurrentWinnings(betAmount * newMultiplier);
@@ -1058,7 +1058,7 @@ function GameApp() {
       setCurrentWinnings(betAmount);
       setCurrentMultiplier(1.0);
     } else {
-      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const multiplierIndex = Math.max(0, Math.min(streak, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
       const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
       setCurrentMultiplier(newMultiplier);
       setCurrentWinnings(betAmount * newMultiplier);
@@ -1110,7 +1110,7 @@ function GameApp() {
       setFinalStreak(streak);
       
       // Calculate final winnings using the correct difficulty-based multipliers
-      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const multiplierIndex = Math.max(0, Math.min(streak, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
       const finalMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
       const finalWinnings = betAmount * finalMultiplier;
       
@@ -1160,7 +1160,7 @@ function GameApp() {
   useEffect(() => {
     if (win) {
       // Calculate final winnings using the correct difficulty-based multipliers
-      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const multiplierIndex = Math.max(0, Math.min(streak, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
       const finalMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
       const finalWinnings = betAmount * finalMultiplier;
       
