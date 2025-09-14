@@ -409,9 +409,10 @@ function GameApp() {
           setStreak(prev => {
             const newStreak = prev + 1;
             // Update multiplier and winnings with the new streak value
-            const newMultiplier = 1 + (newStreak * 0.1);
-            setCurrentMultiplier(newMultiplier);
-            setCurrentWinnings(betAmount * newMultiplier);
+        const multiplierIndex = Math.max(0, Math.min(newStreak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+        const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
+        setCurrentMultiplier(newMultiplier);
+        setCurrentWinnings(betAmount * newMultiplier);
             return newStreak;
           });
           
@@ -1037,10 +1038,23 @@ function GameApp() {
   // Streak and winnings tracking
   const [streak, setStreak] = useState(0);
   const [finalStreak, setFinalStreak] = useState(0); // Store final streak for modal
-  const [currentWinnings, setCurrentWinnings] = useState(8);
-  const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
   const [betAmount, setBetAmount] = useState(8);
+  const [currentWinnings, setCurrentWinnings] = useState(betAmount);
+  const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
   const [betFraction, setBetFraction] = useState("MAX");
+
+  // Update winnings and multiplier when betAmount, difficulty, or streak changes
+  useEffect(() => {
+    if (streak === 0) {
+      setCurrentWinnings(betAmount);
+      setCurrentMultiplier(1.0);
+    } else {
+      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const newMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
+      setCurrentMultiplier(newMultiplier);
+      setCurrentWinnings(betAmount * newMultiplier);
+    }
+  }, [betAmount, difficulty, streak, DIFFICULTY_MULTIPLIERS]);
 
   // Difficulty button handlers
   const handleDifficultyChange = useCallback((newDifficulty) => {
@@ -1841,7 +1855,7 @@ function GameApp() {
             {/* Leaderboard Modal Overlay */}
             {showLeaderboard && (
               <div className="leaderboard-modal-overlay" onClick={() => setShowLeaderboard(false)}>
-                <div className="leaderboard-modal leaderboard-modal-figma" style={{height: 874, width: 532, background: '#0E0B11', border: '2px solid #9147CD', borderRight: '1px solid #38384B', boxShadow: '-32px 0px 28px rgba(0,0,0,0.12)', boxSizing: 'border-box', padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 19, position: 'relative'}} onClick={e => e.stopPropagation()}>
+                <div className="leaderboard-modal leaderboard-modal-figma" style={{height: 874, width: 532, background: '#0E0B11', boxShadow: '-32px 0px 28px rgba(0,0,0,0.12)', boxSizing: 'border-box', padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 19, position: 'relative'}} onClick={e => e.stopPropagation()}>
                   <button className="leaderboard-close-btn-absolute" style={{position: 'absolute', top: 18, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 28, cursor: 'pointer', zIndex: 10}} onClick={() => setShowLeaderboard(false)}>✕</button>
                   <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', width: 468, height: 24, marginBottom: 12}}>
                     <div className="leaderboard-title" style={{fontFamily: 'Minecraft', fontWeight: 500, fontSize: 16, color: '#fff', width: 102}}>Leaderboard</div>
