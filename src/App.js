@@ -1745,7 +1745,7 @@ function GameApp() {
               </div>
             </div>
             <div className="streak-multiplier-logos-mobile" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 10, gap: 10 }}>
-              <a href="https://letsbonk.fun/" target="_blank" rel="noopener noreferrer">
+              <a href="https://pump.fun/coin/FBmAz4nqF7d913SGyXVgFDFux1Fj38KtLr9fbdywpump" target="_blank" rel="noopener noreferrer">
                 <img
                   src="https://i.imgur.com/hCCc9O1.png"
                   alt="Bonk"
@@ -1957,7 +1957,7 @@ function GameApp() {
           </div>
         );
 }
-bo
+
 export default function App() {
   const endpoint = clusterApiUrl('mainnet-beta');
   const wallets = [new PhantomWalletAdapter()];
