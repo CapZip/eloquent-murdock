@@ -584,11 +584,22 @@ function GameApp() {
     setLeaderboardLoading(true);
     try {
       const result = await getLeaderboard(15, "7d");
-      if (result.success) {
+      // Handle both wrapped and direct response formats
+      if (result && result.success && result.leaderboard) {
         setLeaderboardData(result.leaderboard);
+      } else if (result && Array.isArray(result)) {
+        // Direct array response
+        setLeaderboardData(result);
+      } else if (result && result.leaderboard) {
+        // Response with leaderboard property but no success flag
+        setLeaderboardData(result.leaderboard);
+      } else {
+        console.warn('Unexpected leaderboard response format:', result);
+        setLeaderboardData([]);
       }
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
+      setLeaderboardData([]); // Set empty array on error
       Swal.fire({
         title: 'Leaderboard Error',
         text: error.message || 'Failed to fetch leaderboard data.',
@@ -1100,9 +1111,13 @@ function GameApp() {
       // Store final streak before resetting
       setFinalStreak(streak);
       
+      // Calculate final winnings using the correct difficulty-based multipliers
+      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const finalMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
+      const finalWinnings = betAmount * finalMultiplier;
+      
       Swal.fire({
         title: '💀 GAME OVER 💀',
-        text: `You died after ${finalStreak} moves! Final winnings: $${currentWinnings.toFixed(2)}`,
         icon: 'error',
         confirmButtonText: 'Try Again',
         confirmButtonColor: '#dc3545',
@@ -1146,9 +1161,14 @@ function GameApp() {
 
   useEffect(() => {
     if (win) {
+      // Calculate final winnings using the correct difficulty-based multipliers
+      const multiplierIndex = Math.max(0, Math.min(streak - 1, DIFFICULTY_MULTIPLIERS[difficulty].length - 1));
+      const finalMultiplier = DIFFICULTY_MULTIPLIERS[difficulty][multiplierIndex];
+      const finalWinnings = betAmount * finalMultiplier;
+      
       Swal.fire({
         title: '🎉 YOU WIN! 🎉',
-        text: `Congratulations! You reached the end! Bet: $${betAmount.toFixed(2)} | Winnings: $${currentWinnings.toFixed(2)}`,
+        text: `Congratulations! You reached the end! Bet: $${betAmount.toFixed(2)} | Winnings: $${finalWinnings.toFixed(2)} (${finalMultiplier.toFixed(2)}x)`,
         icon: 'success',
         confirmButtonText: 'Play Again',
         confirmButtonColor: '#28a745',
@@ -1861,7 +1881,11 @@ function GameApp() {
                     <div className="leaderboard-title" style={{fontFamily: 'Minecraft', fontWeight: 500, fontSize: 16, color: '#fff', width: 102}}>Leaderboard</div>
                   </div>
                   {/* Podium for Top 3 */}
-                  {leaderboardData.length > 0 && (
+                  {leaderboardLoading ? (
+                    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: 223, width: 468, fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2'}}>
+                      Loading podium...
+                    </div>
+                  ) : leaderboardData.length > 0 && (
                     <div className="leaderboard-podium-row" style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 16, width: 468, height: 223, margin: '0 auto', filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.25))'}}>
                       {/* 2nd Place */}
                       <div className="podium podium-2nd" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: 132.5, height: 212.5, padding: 8}}>
@@ -1910,14 +1934,24 @@ function GameApp() {
                   </div>
                   {/* Leaderboard List */}
                   <div className="leaderboard-list-container" style={{flex: 1, overflowY: 'auto', width: '100%'}}>
-                    {leaderboardData.slice(3).map((entry, idx) => (
-                      <div key={entry.walletAddress} style={{display: 'flex', flexDirection: 'row', alignItems: 'center', background: '#181624', borderRadius: 12, marginBottom: 8, padding: '8px 16px', fontFamily: 'Pixel Digivolve', fontSize: 14, color: '#fff'}}>
-                        <div style={{width: 40, color: '#B0B1D2'}}>{idx + 4}</div>
-                        <div style={{flex: 1, textTransform: 'uppercase'}}>{entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}</div>
-                        <div style={{width: 100, textAlign: 'right', color: '#B0B1D2'}}>${entry.betAmount?.toFixed(2) || '0.00'}</div>
-                        <div style={{width: 100, textAlign: 'right', color: '#00FF7F'}}>${entry.payoutAmount?.toFixed(2) || '0.00'}</div>
+                    {leaderboardLoading ? (
+                      <div className="leaderboard-loading" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2'}}>
+                        Loading leaderboard...
                       </div>
-                    ))}
+                    ) : leaderboardData.length === 0 ? (
+                      <div className="leaderboard-empty" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontFamily: 'Pixel Digivolve', fontSize: 16, color: '#B0B1D2'}}>
+                        No leaderboard data available
+                      </div>
+                    ) : (
+                      leaderboardData.slice(3).map((entry, idx) => (
+                        <div key={entry.walletAddress} style={{display: 'flex', flexDirection: 'row', alignItems: 'center', background: '#181624', borderRadius: 12, marginBottom: 8, padding: '8px 16px', fontFamily: 'Pixel Digivolve', fontSize: 14, color: '#fff'}}>
+                          <div style={{width: 40, color: '#B0B1D2'}}>{idx + 4}</div>
+                          <div style={{flex: 1, textTransform: 'uppercase'}}>{entry.walletAddress?.slice(0, 6)}...{entry.walletAddress?.slice(-4)}</div>
+                          <div style={{width: 100, textAlign: 'right', color: '#B0B1D2'}}>${entry.betAmount?.toFixed(2) || '0.00'}</div>
+                          <div style={{width: 100, textAlign: 'right', color: '#00FF7F'}}>${entry.payoutAmount?.toFixed(2) || '0.00'}</div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
